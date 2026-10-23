@@ -1,0 +1,21 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { mkdtempSync, rmSync, existsSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+test('help and setup work without a server, wallet, root env or local database', t => {
+  const home = mkdtempSync(join(tmpdir(), 'chog-cli-'));
+  t.after(() => rmSync(home, { recursive: true, force: true }));
+  const entry = fileURLToPath(new URL('../bin/chog.js', import.meta.url));
+  const run = (...args) => spawnSync(process.execPath, [entry, ...args], { encoding: 'utf8', cwd: tmpdir(), env: { ...process.env, CHOG_HOME: home } });
+  const help = run('--help');
+  assert.equal(help.status, 0, help.stderr);
+  assert.match(help.stdout, /Local Chog/);
+  const setup = run('setup', 'codex');
+  assert.equal(setup.status, 0, setup.stderr);
+  assert.match(setup.stdout, /codex mcp add chog/);
+  assert.equal(existsSync(join(home, 'chog.db')), false);
+  assert.notEqual(run('unknown').status, 0);
+});

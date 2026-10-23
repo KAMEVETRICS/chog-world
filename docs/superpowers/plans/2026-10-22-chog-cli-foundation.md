@@ -1,5 +1,7 @@
 # Chog CLI Foundation Implementation Plan
 
+**Superseded:** The user chose a local core. Use [the local-core plan](2026-10-22-chog-local-core.md); the hosted authentication/migration proposal below must not be implemented for the local CLI.
+
 > **For agentic workers:** Use superpowers:executing-plans for implementation in this chat. Steps use checkbox (`- [ ]`) syntax for tracking. Do not delegate implementation tasks unless the user requests it.
 
 **Goal:** Let a Chog holder sign in, select an awakened Chog, and use its existing persona and explicitly saved local memory through Codex or Claude Code without charging hosted model credits.

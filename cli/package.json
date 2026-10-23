@@ -1,0 +1,33 @@
+{
+  "name": "@chogworld/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Local Chog personas and read-only Monad tools for coding assistants",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24"
+  },
+  "bin": {
+    "chog": "bin/chog.js"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "README.md",
+    "THIRD_PARTY_NOTICES.md"
+  ],
+  "scripts": {
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "start": "node bin/chog.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/server": "2.3.1",
+    "ethers": "6.17.0",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/client": "2.3.1",
+    "typescript": "5.6.3"
+  }
+}

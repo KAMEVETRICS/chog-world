@@ -1,5 +1,7 @@
 # Chog CLI: reuse assessment and proposed first release
 
+**Updated direction (2026-10-22):** The user chose a local core. The first implementation is in `cli/`, with direct Monad ownership/binding checks and local wallet proof, persona and memory. It does not depend on Chog World authentication or hosted APIs. The original server-dependent auth proposal below is historical; use [the local-core plan](superpowers/plans/2026-10-22-chog-local-core.md) and [CLI guide](../cli/README.md) for current behavior. Market analytics and Discord remain follow-ups.
+
 Reviewed 2026-10-22 against [KAMEVETRICS/normies-CLI](https://github.com/KAMEVETRICS/normies-CLI), commit `fc70b79e48df60a940f28970d14f566c17e1a54b`. This is a source review and build proposal; no Chog CLI has been shipped or installed by this change.
 
 ## Recommendation

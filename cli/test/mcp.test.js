@@ -1,0 +1,36 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { Client } from '@modelcontextprotocol/client';
+import { StdioClientTransport } from '@modelcontextprotocol/client/stdio';
+import { LocalStore } from '../src/store.js';
+
+for (const mode of ['legacy', { pin: '2026-07-28' }]) test(`MCP stdio ${typeof mode === 'string' ? mode : mode.pin}: tools, validation and safe failures`, async t => {
+  const home = mkdtempSync(join(tmpdir(), 'chog-mcp-'));
+  const store = new LocalStore(home);
+  store.set('public-card', { schemaVersion: 1, agentKey: 'test-profile', persona: { name: 'Offline Chog' } });
+  store.close();
+  const transport = new StdioClientTransport({ command: process.execPath, args: [fileURLToPath(new URL('../bin/chog.js', import.meta.url)), 'mcp'], env: { ...process.env, CHOG_HOME: home }, stderr: 'pipe' });
+  const client = new Client({ name: 'chog-test', version: '1.0.0' }, { versionNegotiation: { mode } });
+  t.after(async () => { await client.close(); transport.stderr?.destroy(); rmSync(home, { recursive: true, force: true }); });
+  await client.connect(transport);
+  const list = await client.listTools();
+  assert.ok(list.tools.some(tool => tool.name === 'chog_persona_context'));
+  assert.ok(!list.tools.some(tool => /sign|send|trade|pay/.test(tool.name)));
+  const skills = await client.callTool({ name: 'chog_skills_list', arguments: {} });
+  assert.match(skills.content[0].text, /monad-analysis/);
+  const offline = await client.callTool({ name: 'chog_offline_persona', arguments: {} });
+  assert.match(offline.content[0].text, /Offline Chog/);
+  assert.match(offline.content[0].text, /offline-copy/);
+  const context = await client.callTool({ name: 'chog_persona_context', arguments: {} });
+  assert.equal(context.isError, true);
+  assert.match(context.content[0].text, /login/i);
+  const bad = await client.callTool({ name: 'chog_memory_add', arguments: { text: 'x'.repeat(2001) } });
+  assert.equal(bad.isError, true);
+  const extra = await client.callTool({ name: 'chog_skills_list', arguments: { arbitrary: 'no' } });
+  assert.equal(extra.isError, true);
+  await assert.rejects(client.callTool({ name: 'does_not_exist', arguments: {} }));
+});

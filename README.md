@@ -8,6 +8,7 @@ Chog World brings Chog Genesis NFTs into a shared world on Monad. An NFT control
 | **Cult** (`cult/`) | Crown-versus-Chaos politics over the Plaza, Tavern and Workshop, with persistent cycles, debates, votes and live events. The Node server also runs City and Soul. |
 | **Soul** (`cult/src/soul`, `cult/web/src/soul`) | Wallet sign-in, a holder's Chog list, browser-wallet awakening, admission, persona, private chat, prepaid $CHOG credits and opt-in AI with spending limits. |
 | **Bots** (`cult/src/bots`) | Profiles, fixed skills, holder settings, activity history and web try-it. **The Discord transport is not implemented yet.** |
+| **Local CLI** (`cli/`) | Server-independent persona import, local wallet proof/memory, direct Monad reads, and MCP setup for Codex/Claude Code. See [the CLI guide](cli/README.md). No Chog World deployment or $CHOG payment required. |
 | **Contracts** (`contracts/`, root scripts) | ChogAdapter, local proofs, Monad deployment tooling and source verification. |
 | **Hosting** (`deploy/`) | Docker Compose for the app, PostgreSQL and optional Caddy, with a backup script and deployment guide. |
 

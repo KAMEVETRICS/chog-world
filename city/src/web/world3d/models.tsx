@@ -51,7 +51,39 @@ function Smoke({ position }: { position: [number, number, number] }) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Homes
+// Homes. Levels 1-2 change the house itself; levels 3-5 add to it (porch, wing, tower...), so every
+// upgrade is visible from across the village and a level-5 home reads as the grandest on the street.
+
+/** A pennant on a pole: crowns the top level of every style. */
+function Pennant({ position, height = 0.42 }: { position: [number, number, number]; height?: number }) {
+  const flag = useRef<THREE.Mesh>(null!);
+  useFrame(({ clock }) => void (flag.current.rotation.y = Math.sin(clock.elapsedTime * 2.2) * 0.25));
+  return (
+    <group position={position}>
+      <mesh geometry={geo.cylinder(0.012, 0.012, height, 5)} material={toon(C.woodDark)} position={[0, height / 2, 0]} />
+      <mesh ref={flag} geometry={geo.box(0.18, 0.1, 0.01)} material={toon(C.chog)} position={[0.09, height - 0.06, 0]} />
+    </group>
+  );
+}
+
+/** A water wheel turning on its axle (the mill). */
+function WaterWheel({ position }: { position: [number, number, number] }) {
+  const wheel = useRef<THREE.Group>(null!);
+  useFrame((_, dt) => void (wheel.current.rotation.x -= dt * 0.7));
+  return (
+    <group position={position}>
+      <group ref={wheel}>
+        <Part geo={geo.torus(0.36, 0.04, 5, 18)} color="#c58a57" rotation-y={Math.PI / 2} outline={0.012} />
+        <Part geo={geo.torus(0.2, 0.025, 4, 14)} color="#c58a57" rotation-y={Math.PI / 2} />
+        {Array.from({ length: 10 }, (_, i) => (
+          <mesh key={i} geometry={geo.box(0.16, 0.06, 0.74)} material={toon(i % 2 ? C.wood : C.woodDark)} rotation-x={(i / 10) * Math.PI} />
+        ))}
+      </group>
+      <Part geo={geo.box(0.2, 0.12, 0.9)} color={C.stone} position={[0, -0.3, 0]} outline={0.01} />
+      <mesh geometry={geo.cylinder(0.04, 0.04, 0.2, 6)} material={toon(C.slate)} rotation-z={Math.PI / 2} position={[0.08, 0, 0]} />
+    </group>
+  );
+}
 
 function Cottage({ level }: { level: number }) {
   if (level >= 2) {
@@ -71,6 +103,49 @@ function Cottage({ level }: { level: number }) {
         {[-0.41, -0.33, -0.25].map((x, i) => (
           <mesh key={x} geometry={geo.sphere(0.035, 6, 4)} material={toon(['#e98aa6', '#f4d35e', '#ffffff'][i]!)} position={[x, 0.21, 0.52]} />
         ))}
+        {level >= 3 ? (
+          // Porch cottage: a covered porch over the door and a dormer in the roof.
+          <group>
+            {[-0.24, 0.24].map((x) => (
+              <mesh key={x} geometry={geo.box(0.045, 0.44, 0.045)} material={toon(C.woodDark)} position={[x, 0.22, 0.66]} castShadow />
+            ))}
+            <Part geo={geo.box(0.62, 0.05, 0.3)} color={C.roofDark} position={[0, 0.46, 0.6]} rotation-x={0.22} outline={0.012} />
+            <group position={[-0.26, 1.19, 0.34]}>
+              <Part geo={geo.box(0.26, 0.24, 0.2)} color={C.plaster} outline={0.012} />
+              <Part geo={gable(0.32, 0.16, 0.28)} color={C.roof} position={[0, 0.12, 0]} outline={0.012} />
+              <Window position={[0, -0.01, 0.1]} size={[0.12, 0.12]} />
+            </group>
+          </group>
+        ) : null}
+        {level >= 4 ? (
+          // Farmhouse: a stone footing and a lean-to shed with a woodpile.
+          <group>
+            <Part geo={geo.box(1.17, 0.16, 0.95)} color={C.stone} position={[0, 0.08, 0]} />
+            <Part geo={geo.box(0.26, 0.5, 0.6)} color={C.wood} position={[0.69, 0.25, -0.05]} outline={0.012} />
+            <Part geo={geo.box(0.32, 0.04, 0.68)} color={C.roofDark} position={[0.7, 0.53, -0.05]} rotation-z={-0.35} outline={0.01} />
+            {[0, 1, 2].map((i) => (
+              <mesh key={i} geometry={geo.cylinder(0.05, 0.05, 0.3, 6)} material={toon(i % 2 ? C.wood : '#c58a57')} position={[0.7, 0.07 + i * 0.09, 0.33]} rotation-z={Math.PI / 2} />
+            ))}
+            {/* hay bales by the shed: the farm in farmhouse */}
+            {[
+              [0.5, 0.11, 0.62, 0.3],
+              [0.72, 0.11, 0.6, -0.2],
+              [0.61, 0.3, 0.6, 0.1],
+            ].map(([x, y, z, r]) => (
+              <Part key={`${x}${y}`} geo={geo.cylinder(0.11, 0.11, 0.2, 10)} color={C.wheat} position={[x!, y!, z!]} rotation={[0, r!, Math.PI / 2]} outline={0.01} />
+            ))}
+          </group>
+        ) : null}
+        {level >= 5 ? (
+          // Manor: a round tower at the back, lit at night, flying the village pennant.
+          <group position={[-0.46, 0, -0.28]}>
+            <Part geo={geo.cylinder(0.2, 0.23, 2.05, 10)} color={C.plaster} position={[0, 1.025, 0]} outline={INKED} />
+            <Part geo={geo.cylinder(0.24, 0.24, 0.08, 10)} color={C.stone} position={[0, 2.05, 0]} outline={0.012} />
+            <Part geo={geo.cone(0.29, 0.46, 10)} color={C.roof} position={[0, 2.32, 0]} outline={INKED} />
+            <Window position={[0, 1.75, 0.2]} size={[0.1, 0.15]} />
+            <Pennant position={[0, 2.54, 0]} />
+          </group>
+        ) : null}
       </group>
     );
   }
@@ -137,6 +212,28 @@ function WorkshopHome({ level }: { level: number }) {
           <Part geo={geo.box(0.16, 0.15, 0.16)} color={C.woodDark} position={[w / 2 + 0.16, 0.27, 0.18]} rotation-y={0.7} outline={0.012} />
         </>
       ) : null}
+      {level >= 3 ? (
+        // Forge: a tall brick chimney with smoke, and an anvil by the door.
+        <group>
+          <Part geo={geo.box(0.2, 0.75, 0.2)} color="#9a5a46" position={[0.42, h + 0.3, -0.24]} outline={0.014} />
+          <Smoke position={[0.42, h + 0.72, -0.24]} />
+          <group position={[-0.5, 0, 0.56]}>
+            <Part geo={geo.box(0.1, 0.16, 0.1)} color={C.woodDark} position={[0, 0.08, 0]} />
+            <Part geo={geo.box(0.22, 0.07, 0.1)} color="#3a3048" position={[0.02, 0.19, 0]} outline={0.01} />
+          </group>
+        </group>
+      ) : null}
+      {level >= 4 ? <WaterWheel position={[-w / 2 - 0.1, 0.38, 0.05]} /> : null}
+      {level >= 5 ? (
+        // Guildhall: a clock tower on the roof, flying the village pennant.
+        <group position={[-0.1, h + 0.07, 0]}>
+          <Part geo={geo.box(0.32, 0.52, 0.32)} color={C.stone} position={[0, 0.26, 0]} outline={INKED} />
+          <mesh geometry={geo.cylinder(0.1, 0.1, 0.02, 14)} material={toon('#fbf3e0')} position={[0, 0.34, 0.165]} rotation-x={Math.PI / 2} />
+          <mesh geometry={geo.box(0.012, 0.07, 0.01)} material={toon(C.slate)} position={[0, 0.37, 0.18]} />
+          <Part geo={geo.cone(0.27, 0.32, 4)} color={C.slate} position={[0, 0.68, 0]} rotation-y={Math.PI / 4} outline={0.014} />
+          <Pennant position={[0, 0.82, 0]} height={0.36} />
+        </group>
+      ) : null}
     </group>
   );
 }
@@ -159,6 +256,42 @@ function Treehouse({ level }: { level: number }) {
         <Part geo={geo.icosahedron(big ? 0.42 : 0.34, 0)} color={C.leafLight} position={[-0.42, -0.12, 0.12]} outline={INKED} />
         <Part geo={geo.icosahedron(big ? 0.4 : 0.32, 0)} color={C.leafLight} position={[0.44, -0.08, 0.05]} outline={INKED} />
       </group>
+      {level >= 3 ? (
+        // Two decks: a lower platform with a railing around the trunk.
+        <group position={[0, 0.48, -0.08]}>
+          <Part geo={geo.cylinder(0.58, 0.58, 0.05, 12)} color={C.wood} outline={0.012} />
+          {Array.from({ length: 10 }, (_, i) => {
+            const a = (i / 10) * Math.PI * 2;
+            return i === 2 ? null : <mesh key={i} geometry={geo.box(0.03, 0.2, 0.03)} material={toon(C.woodDark)} position={[Math.cos(a) * 0.54, 0.1, Math.sin(a) * 0.54]} />;
+          })}
+          <mesh geometry={geo.torus(0.54, 0.018, 4, 24)} material={toon(C.woodDark)} position={[0, 0.2, 0]} rotation-x={Math.PI / 2} />
+        </group>
+      ) : null}
+      {level >= 4 ? (
+        // Canopy lodge: a second little hut on the lower deck.
+        <group position={[-0.34, 0.5, 0.24]} rotation-y={0.35}>
+          <Part geo={geo.box(0.3, 0.26, 0.26)} color="#e8cfa4" position={[0, 0.13, 0]} outline={0.014} />
+          <Part geo={gable(0.36, 0.18, 0.32)} color={C.roof} position={[0, 0.26, 0]} outline={0.014} />
+          <Window position={[0, 0.13, 0.135]} size={[0.1, 0.1]} />
+        </group>
+      ) : null}
+      {level >= 5 ? (
+        // Tree palace: lanterns strung through the canopy, and a lookout on top.
+        <group>
+          {Array.from({ length: 7 }, (_, i) => {
+            const a = (i / 7) * Math.PI * 2;
+            return <mesh key={i} geometry={geo.sphere(0.04, 6, 4)} material={glow.lamp} position={[Math.cos(a) * 0.62, deck + 0.78 + Math.sin(a * 2) * 0.06, Math.sin(a) * 0.5 - 0.12]} />;
+          })}
+          <group position={[0, deck + 1.45, -0.12]}>
+            <Part geo={geo.cylinder(0.16, 0.16, 0.05, 8)} color={C.woodDark} outline={0.01} />
+            <Part geo={geo.cone(0.2, 0.26, 8)} color={C.roof} position={[0, 0.26, 0]} outline={0.012} />
+            {[0, 1, 2, 3].map((i) => (
+              <mesh key={i} geometry={geo.box(0.025, 0.14, 0.025)} material={toon(C.woodDark)} position={[Math.cos((i * Math.PI) / 2) * 0.13, 0.08, Math.sin((i * Math.PI) / 2) * 0.13]} />
+            ))}
+            <Pennant position={[0, 0.36, 0]} height={0.3} />
+          </group>
+        </group>
+      ) : null}
       {/* ladder */}
       <group position={[0.3, deck / 2, 0.36]} rotation-x={-0.12}>
         <mesh geometry={geo.box(0.025, deck, 0.025)} material={toon(C.woodDark)} position={[-0.08, 0, 0]} />
@@ -368,7 +501,7 @@ function Windmill() {
   );
 }
 
-function Lantern() {
+export function Lantern() {
   const light = useRef<THREE.PointLight>(null!);
   useFrame(() => void (light.current.intensity = 0.3 + night.value * 9));
   return (
@@ -381,7 +514,8 @@ function Lantern() {
   );
 }
 
-export function Place3D({ id }: { id: PlaceId }) {
+/** `centre` replaces the Plaza's lantern (the Fountain is built around it). */
+export function Place3D({ id, centre }: { id: PlaceId; centre?: React.ReactNode }) {
   switch (id) {
     case 'forest':
       return (
@@ -468,7 +602,7 @@ export function Place3D({ id }: { id: PlaceId }) {
         <group>
           <mesh geometry={geo.cylinder(1.35, 1.4, 0.06, 28)} material={toon(C.cobble)} position={[0, 0.03, 0]} receiveShadow />
           <mesh geometry={geo.torus(1.32, 0.05, 4, 32)} material={toon(C.pathEdge)} position={[0, 0.06, 0]} rotation-x={Math.PI / 2} />
-          <Lantern />
+          {centre ?? <Lantern />}
           {[-1, 1].map((side) => (
             <group key={side} position={[side * 0.95, 0, -0.75]} rotation-y={-side * 0.6}>
               <Part geo={geo.box(0.6, 0.05, 0.2)} color={C.wood} position={[0, 0.2, 0]} outline={0.012} />

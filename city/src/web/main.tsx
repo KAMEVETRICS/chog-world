@@ -10,7 +10,8 @@ import './tokens.css';
 const serverMode = import.meta.env.MODE === 'server';
 
 const ChogPreview = lazy(() => import('./world3d/ChogPreview'));
-const preview = new URLSearchParams(window.location.search).get('preview') === 'chog';
+const HomePreview = lazy(() => import('./world3d/HomePreview'));
+const preview = new URLSearchParams(window.location.search).get('preview');
 
 // No StrictMode: its dev-only double mount orphans drei <Html> overlays in the 3D scene,
 // and production never double-mounts, so development now matches what players see.
@@ -23,17 +24,13 @@ const notice = (message: string) =>
     </div>,
   );
 
-if (preview) {
-  show(
-    <Suspense fallback={null}>
-      <ChogPreview />
-    </Suspense>,
-  );
+if (preview === 'chog' || preview === 'homes') {
+  show(<Suspense fallback={null}>{preview === 'chog' ? <ChogPreview /> : <HomePreview />}</Suspense>);
 } else if (serverMode) {
   fetchSite().then(
-    (site) => (site.city ? show(<App client={new HttpCityClient()} server={{ site }} />) : notice("This server isn't running Chog City.")),
+    (site) => (site.city ? show(<App client={new HttpCityClient()} server={{ site }} onboarding />) : notice("This server isn't running Chog City.")),
     () => notice("Can't reach the village right now. Reload to try again."),
   );
 } else {
-  show(<App client={new FixtureCityClient()} />);
+  show(<App client={new FixtureCityClient()} onboarding />);
 }

@@ -17,19 +17,19 @@ export interface ParamRule {
 }
 
 export const CONSTITUTION: Readonly<Record<ParamId, ParamRule>> = {
-  farmYield: { label: 'Farm yield', unit: 'food', meaning: 'Food from one tick of work at Clover Farm.', default: 3, min: 1, max: 6, maxStep: 1 },
-  forestYield: { label: 'Forest yield', unit: 'wood', meaning: 'Wood from one tick of work at Whisperpine Forest.', default: 3, min: 1, max: 6, maxStep: 1 },
-  quarryYield: { label: 'Quarry yield', unit: 'stone', meaning: 'Stone from one tick of work at Greystep Quarry.', default: 2, min: 1, max: 5, maxStep: 1 },
-  wage: { label: 'Wage', unit: 'coins', meaning: 'New coins the city pays a citizen for one tick of work.', default: 5, min: 0, max: 10, maxStep: 2 },
+  farmYield: { label: 'Farm yield', unit: 'food', meaning: 'Food from one hour of work at Clover Farm.', default: 3, min: 1, max: 6, maxStep: 1 },
+  forestYield: { label: 'Forest yield', unit: 'wood', meaning: 'Wood from one hour of work at Whisperpine Forest.', default: 3, min: 1, max: 6, maxStep: 1 },
+  quarryYield: { label: 'Quarry yield', unit: 'stone', meaning: 'Stone from one hour of work at Greystep Quarry.', default: 2, min: 1, max: 5, maxStep: 1 },
+  wage: { label: 'Wage', unit: 'coins', meaning: 'New coins the city pays a villager for one hour of work.', default: 5, min: 0, max: 10, maxStep: 2 },
   incomeTaxPct: { label: 'Income tax', unit: '%', meaning: 'Share of each wage that goes to the treasury.', default: 20, min: 0, max: 40, maxStep: 5 },
   marketFeePct: { label: 'Market fee', unit: '%', meaning: "The market's cut on every trade at the Plaza, kept by the treasury.", default: 10, min: 0, max: 30, maxStep: 5 },
 };
 
 /** What no vote can change, for the City Hall page. */
 export const PROTECTED: readonly string[] = [
-  'Who owns a Chog: that is read from the chain.',
-  'The ledgers: every coin and every resource is recorded and must balance.',
-  'Anything outside the table above, including night and day, the map and safety rules.',
+  'Who owns a Chog. That always comes from the blockchain.',
+  'The books. Every coin and every material is recorded, and they must balance.',
+  'Anything not in the table, like day and night, the map and the safety rules.',
 ];
 
 export function defaultParams(): Params {

@@ -1,0 +1,168 @@
+/* "While you were away": shares the welcome's scrim and card, laid out as a short letter from the village. */
+
+.recap {
+  position: relative;
+  width: min(560px, 100%);
+  margin: auto;
+  padding: 26px 28px 22px;
+  animation: welcome-in 420ms var(--ease-out);
+}
+
+.recap-title {
+  margin: 2px 0 18px;
+  font-family: var(--font-display);
+  font-size: 32px;
+  line-height: 1.05;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variation-settings: 'SOFT' 100, 'WONK' 1, 'opsz' 72;
+}
+
+.recap-chogs {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recap-chog {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: start;
+  gap: 12px;
+  padding: 12px;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-m);
+  background: var(--paper);
+}
+
+.recap-villager .recap-chog {
+  grid-template-columns: 56px 1fr;
+}
+
+.recap-portrait {
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  overflow: hidden;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--chog-soft);
+}
+
+.recap-portrait img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recap-portrait--villager {
+  background: var(--paper-raised);
+}
+
+.recap-chog-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 2px 0 4px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 650;
+}
+
+.recap-mood {
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-family: var(--font-ui);
+  font-size: 11.5px;
+  font-weight: 650;
+}
+
+.recap-mood--ok {
+  background: #e3f0de;
+  color: var(--ok);
+}
+.recap-mood--warn {
+  background: #f8e8cc;
+  color: var(--warn);
+}
+.recap-mood--alert {
+  background: #f6dcd5;
+  color: var(--alert);
+}
+
+.recap-lines,
+.recap-news {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.recap-lines li,
+.recap-news li {
+  position: relative;
+  padding-left: 14px;
+}
+
+.recap-lines li + li,
+.recap-news li + li {
+  margin-top: 3px;
+}
+
+.recap-lines li::before,
+.recap-news li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.62em;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--chog);
+}
+
+.recap-news li::before {
+  background: var(--food);
+}
+
+.recap-visit {
+  align-self: center;
+  margin-top: 0;
+}
+
+.recap-villager,
+.recap-town {
+  margin-top: 18px;
+}
+
+.recap .recap-close {
+  width: 100%;
+  margin-top: 20px;
+  align-items: center;
+  background: var(--chog);
+  color: #fff;
+}
+
+@media (max-width: 760px) {
+  .recap {
+    padding: 20px 16px 16px;
+  }
+  .recap-title {
+    font-size: 26px;
+  }
+  .recap-chog {
+    grid-template-columns: 48px 1fr;
+  }
+  .recap-portrait {
+    width: 48px;
+    height: 48px;
+  }
+  .recap-visit {
+    grid-column: 2;
+    justify-self: start;
+  }
+}

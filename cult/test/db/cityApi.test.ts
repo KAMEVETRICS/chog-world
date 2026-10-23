@@ -8,6 +8,7 @@ import { Wallet } from "ethers";
 import { buildServer } from "../../src/api/server.js";
 import type { AuthConfig } from "../../src/api/auth.js";
 import { PgCult } from "../../src/db/pgCult.js";
+import { RULESET_VERSION } from "../../src/citysim/world.js";
 import { PgCity } from "../../src/citysim/pgCity.js";
 import { PgCityFeed } from "../../src/citysim/cityFeed.js";
 import { FixtureChainReader } from "../../src/fixture/chainReader.js";
@@ -80,7 +81,7 @@ describeDb("City public API", () => {
     const config = (await s.app.inject({ url: "/api/cult/config" })).json();
     expect(config).toMatchObject({ city: true, login: true });
     const snapshot = (await s.app.inject({ url: "/api/city/snapshot" })).json();
-    expect(snapshot).toMatchObject({ tick: "2", nextDueAt: expect.any(String), world: { tick: "2", rulesetVersion: "city-m2-citizens" } });
+    expect(snapshot).toMatchObject({ tick: "2", nextDueAt: expect.any(String), world: { tick: "2", rulesetVersion: RULESET_VERSION } });
     expect(snapshot.world.places).toHaveLength(6);
     expect(snapshot.world.plots).toHaveLength(12);
     expect(snapshot.world.agents).toHaveLength(8);

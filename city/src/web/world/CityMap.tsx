@@ -1,7 +1,11 @@
 // The village scene. Renders committed world state only; walking is a CSS transition between
 // committed positions, never a client-side prediction.
 import { memo, useMemo } from 'react';
-import type { AgentState, Location, Place, Plot, WorldState } from '../../shared/contracts';
+import type { AgentState, CitizenState, Location, Lot as LotState, Place, Plot, WorldState } from '../../shared/contracts';
+import { appearanceOf } from '../../shared/looks';
+import { citizenAsleep } from '../../simulation/citizens';
+import { AppearanceBadge } from './Badge';
+import { builtUp } from './growth';
 import { recipeForLevel } from '../../shared/rules';
 import { FACTION_SHORT, type FactionId, type Rulers } from '../cult/rulers';
 import { activityOf } from '../format';
@@ -183,7 +187,7 @@ function PlotMarker({
   selected: boolean;
   onSelect: (key: string) => void;
 }) {
-  const p = at(plot.x, plot.y);
+  const p = plotPoint(plot);
   const c = occupant?.construction;
   const total = c ? recipeForLevel(c.targetLevel)?.buildTicks ?? 1 : 1;
   const progress = c ? (total - c.remainingTicks) / total : 0;
@@ -221,6 +225,168 @@ function PlotMarker({
   );
 }
 
+// ---------------------------------------------------------------------------------------------
+// Newcomers' Row: the villagers' islet, north of the village across a footbridge (as in 3D).
+
+/**
+ * Laid out like the 3D islet: the first row (c01-c10) faces the front lane by the bridge; the second and third
+ * face each other across the back lane; a path runs up the middle from the bridge, five lots either side.
+ */
+const BRIDGE_X = 352;
+const ISLET = { x: 46, w: 612, bottom: -44 };
+/** The islet's top edge for each number of rows in use. */
+const ISLET_TOP = [-104, -156, -200];
+const ROW = { dx: 58, gap: 20, lot: 30 };
+const ROW_Y = [-78, -126, -170];
+const LANE_Y = { front: -56, back: -148 };
+
+/** Where a district lot sits on the map, from its grid position in the world file. */
+function lotAt(lot: LotState): { x: number; y: number } {
+  const side = lot.x < 5 ? -1 : 1;
+  return { x: BRIDGE_X + (lot.x - 4.5) * ROW.dx + side * ROW.gap, y: ROW_Y[lot.y] ?? ROW_Y[0]! };
+}
+
+const Newcomers = memo(function Newcomers({ lots, owners, rows, shownLots }: { lots: readonly LotState[]; owners: ReadonlyMap<string, CitizenState>; rows: number; shownLots: ReadonlySet<string> }) {
+  const top = ISLET_TOP[rows - 1]!;
+  const isletH = ISLET.bottom - top;
+  return (
+    <g aria-hidden="true">
+      <rect x={ISLET.x + 3} y={top + 5} width={ISLET.w} height={isletH} rx="26" fill="var(--meadow-shade)" opacity="0.5" />
+      <rect x={ISLET.x} y={top} width={ISLET.w} height={isletH} rx="26" fill="var(--meadow)" stroke="var(--ink)" strokeWidth="1.6" />
+      {/* lanes: front (by the bridge), back (between rows two and three), and the path up the middle */}
+      <g fill="none" strokeLinecap="round">
+        <g stroke="var(--path-edge)">
+          <path d={`M${ISLET.x + 22} ${LANE_Y.front} H${ISLET.x + ISLET.w - 22}`} strokeWidth="12" />
+          {rows >= 2 ? <path d={`M${ISLET.x + 22} ${LANE_Y.back} H${ISLET.x + ISLET.w - 22}`} strokeWidth="11" /> : null}
+          {rows >= 2 ? <path d={`M${BRIDGE_X} ${LANE_Y.front} V${LANE_Y.back}`} strokeWidth="11" /> : null}
+        </g>
+        <g stroke="var(--path)">
+          <path d={`M${ISLET.x + 22} ${LANE_Y.front} H${ISLET.x + ISLET.w - 22}`} strokeWidth="9" />
+          {rows >= 2 ? <path d={`M${ISLET.x + 22} ${LANE_Y.back} H${ISLET.x + ISLET.w - 22}`} strokeWidth="8" /> : null}
+          {rows >= 2 ? <path d={`M${BRIDGE_X} ${LANE_Y.front} V${LANE_Y.back}`} strokeWidth="8" /> : null}
+        </g>
+      </g>
+      {/* the footbridge down to the village's north lane */}
+      <g>
+        <rect x={BRIDGE_X - 9} y={ISLET.bottom - 4} width="18" height={64} fill="#c69766" stroke="var(--ink)" strokeWidth="1.2" />
+        {Array.from({ length: 7 }, (_, i) => (
+          <path key={i} d={`M${BRIDGE_X - 9} ${ISLET.bottom + 4 + i * 8.5} h18`} stroke="#9c6b45" strokeWidth="1" />
+        ))}
+      </g>
+      {/* a few trees at the ends of the rows */}
+      {[
+        [ISLET.x + 20, top + 30, 0.8],
+        [ISLET.x + 26, -70, 0.7],
+        [ISLET.x + ISLET.w - 22, top + 32, 0.85],
+        [ISLET.x + ISLET.w - 26, -68, 0.7],
+      ].map(([x, y, sc], i) => (
+        <g key={i} transform={`translate(${x} ${y}) scale(${sc})`}>
+          <path d="M-1.5 10 L-1.5 16 M1.5 10 L1.5 16" stroke="var(--wood)" strokeWidth="1.6" />
+          <circle r="13" fill={i % 2 ? '#5f8547' : '#6f8f4e'} stroke="var(--ink)" strokeWidth="1.1" />
+          <circle cx="-4" cy="-4" r="4" fill="#86a862" />
+        </g>
+      ))}
+      <text className="map-label" x={ISLET.x + 14} y={top - 8}>
+        Newcomers' Row
+      </text>
+      {lots.map((lot) => {
+        if (!shownLots.has(lot.id)) return null;
+        const p = lotAt(lot);
+        const owner = owners.get(lot.id);
+        const h = ROW.lot / 2;
+        return (
+          <g key={lot.id} transform={`translate(${p.x} ${p.y})`}>
+            <rect x={-h} y={-h} width={ROW.lot} height={ROW.lot} rx="5" fill={owner ? '#e2d3a6' : 'none'} stroke="var(--path-edge)" strokeWidth="1.2" strokeDasharray={owner ? undefined : '3 3'} />
+            {owner ? (
+              <g transform="translate(0 2)">
+                <path d="M-11 8 L0 -10 L11 8 Z" fill="#efe2c4" stroke="var(--ink)" strokeWidth="1.1" strokeLinejoin="round" />
+                <path d="M-3 8 L0 1 L3 8 Z" fill="#3a2a2a" />
+              </g>
+            ) : null}
+          </g>
+        );
+      })}
+    </g>
+  );
+});
+
+function VillagerToken({ citizen, position, onSelect }: { citizen: CitizenState; position: { x: number; y: number }; onSelect?: (key: string) => void }) {
+  return (
+    <g
+      className="chog villager-token"
+      style={{ transform: `translate(${position.x}px, ${position.y}px)` }}
+      role="button"
+      tabIndex={0}
+      aria-label={`${citizen.name}, villager.`}
+      onClick={() => onSelect?.(citizen.key)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect?.(citizen.key);
+        }
+      }}
+    >
+      <ellipse className="chog-hit" cx="0" cy="-10" rx="13" ry="16" />
+      <g transform="translate(-13 -24)">
+        <AppearanceBadge appearance={appearanceOf(citizen.look)} size={26} />
+      </g>
+      <text className="chog-name" y="12" textAnchor="middle">
+        {citizen.name}
+      </text>
+    </g>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+// Growth districts: little islands of eight homes beside the main island, drawn once someone lives there.
+// East and west islands sit off those shores; the south island below. Homes fill in pairs across the lane,
+// nearest the bridge first (the world file's order).
+
+interface District2D {
+  id: string;
+  /** The lane's first point (by the bridge) and the direction it runs. */
+  start: { x: number; y: number };
+  dir: 1 | -1;
+  bridge: { x: number; y: number; w: number; h: number };
+}
+const GAP = 64;
+const DISTRICTS_2D: District2D[] = [
+  { id: 'east', start: { x: 852, y: 337 }, dir: 1, bridge: { x: 786, y: 328, w: 52, h: 18 } },
+  { id: 'west', start: { x: -84, y: 337 }, dir: -1, bridge: { x: -64, y: 328, w: 52, h: 18 } },
+  { id: 'south', start: { x: 432, y: 800 }, dir: 1, bridge: { x: 434, y: 652, w: 18, h: 70 } },
+];
+const DISTRICT_OF_COLUMN: Record<number, District2D> = { 12: DISTRICTS_2D[0]!, 13: DISTRICTS_2D[1]!, 14: DISTRICTS_2D[2]! };
+
+/** Where a plot sits on the map: its grid cell on the main island, or its slot in a district. */
+function plotPoint(plot: Plot): { x: number; y: number } {
+  const d = DISTRICT_OF_COLUMN[plot.x];
+  if (!d) return at(plot.x, plot.y);
+  const col = Math.floor(plot.y / 2);
+  const side = plot.y % 2 === 0 ? -1 : 1;
+  return { x: d.start.x + d.dir * (col * GAP + GAP / 2), y: d.start.y + side * 44 };
+}
+
+const DistrictIsland = memo(function DistrictIsland({ district }: { district: District2D }) {
+  const x0 = district.dir === 1 ? district.start.x - 22 : district.start.x - 4 * GAP - 2;
+  const w = 4 * GAP + 24;
+  return (
+    <g aria-hidden="true">
+      <rect x={x0 + 3} y={district.start.y - 82 + 5} width={w} height={164} rx="24" fill="var(--meadow-shade)" opacity="0.5" />
+      <rect x={x0} y={district.start.y - 82} width={w} height={164} rx="24" fill="var(--meadow)" stroke="var(--ink)" strokeWidth="1.6" />
+      <path d={`M${x0 + 14} ${district.start.y} H${x0 + w - 14}`} stroke="var(--path-edge)" strokeWidth="12" strokeLinecap="round" />
+      <path d={`M${x0 + 14} ${district.start.y} H${x0 + w - 14}`} stroke="var(--path)" strokeWidth="9" strokeLinecap="round" />
+      {/* the footbridge, planked like the one to Newcomers' Row */}
+      <rect x={district.bridge.x} y={district.bridge.y} width={district.bridge.w} height={district.bridge.h} fill="#c69766" stroke="var(--ink)" strokeWidth="1.2" />
+      {Array.from({ length: Math.floor(Math.max(district.bridge.w, district.bridge.h) / 8.5) - 1 }, (_, i) => {
+        const b = district.bridge;
+        const along = b.w > b.h;
+        const at = (i + 1) * 8.5;
+        return <path key={i} d={along ? `M${b.x + at} ${b.y} v${b.h}` : `M${b.x} ${b.y + at} h${b.w}`} stroke="#9c6b45" strokeWidth="1" />;
+      })}
+    </g>
+  );
+});
+
 const PLACE_SLOTS: [number, number][] = [
   [0, 0], [-19, 5], [19, 5], [-10, 17], [10, 17], [-29, 17], [29, 17], [0, 29], [-20, 30], [20, 30], [-38, 5], [38, 5],
 ];
@@ -228,7 +394,7 @@ const PLACE_SLOTS: [number, number][] = [
 function anchorFor(location: Location, world: WorldState): { x: number; y: number } {
   if (location.kind === 'plot') {
     const plot = world.plots.find((p) => p.id === location.plotId)!;
-    const p = at(plot.x, plot.y);
+    const p = plotPoint(plot);
     return { x: p.x + 24, y: p.y + 30 };
   }
   const place = world.places.find((pl) => pl.id === location.placeId)!;
@@ -243,6 +409,33 @@ function useChogPositions(world: WorldState) {
       const base = anchorFor(location, world);
       const [dx, dy] = location.kind === 'plot' ? [slot * 12, 0] : PLACE_SLOTS[slot % PLACE_SLOTS.length]!;
       positions.set(key, { x: base.x + dx, y: base.y + dy });
+    }
+    return positions;
+  }, [world]);
+}
+
+function useVillagerPositions(world: WorldState) {
+  return useMemo(() => {
+    const taken = new Map<string, number>();
+    for (const { location } of standings(world).values()) {
+      if (location.kind === 'place') taken.set(location.placeId, (taken.get(location.placeId) ?? 0) + 1);
+    }
+    const positions = new Map<string, { x: number; y: number }>();
+    for (const citizen of [...world.citizens].sort((a, b) => (a.key < b.key ? -1 : 1))) {
+      if (citizen.location.kind === 'lot') {
+        const lot = world.lots.find((l) => l.id === citizen.lotId);
+        if (!lot) continue;
+        const p = lotAt(lot);
+        // Asleep: inside the tent, out of sight (as in 3D). Otherwise standing by the tent.
+        if (!citizenAsleep(citizen, world.tick)) positions.set(citizen.key, { x: p.x + 20, y: p.y + 14 });
+        continue;
+      }
+      const placeId = citizen.location.placeId;
+      const slot = taken.get(placeId) ?? 0;
+      taken.set(placeId, slot + 1);
+      const base = anchorFor(citizen.location, world);
+      const [dx, dy] = PLACE_SLOTS[slot % PLACE_SLOTS.length]!;
+      positions.set(citizen.key, { x: base.x + dx, y: base.y + dy });
     }
     return positions;
   }, [world]);
@@ -307,31 +500,49 @@ export function CityMap({
   selectedKey,
   onSelect,
   rulers,
+  onSelectCitizen,
 }: {
   world: WorldState;
   selectedKey: string | null;
   onSelect: (key: string) => void;
   /** Who rules each Cult place (server mode). */
   rulers?: Rulers | null;
+  /** A villager was picked. */
+  onSelectCitizen?: (key: string) => void;
 }) {
   const positions = useChogPositions(world);
+  const villagerPositions = useVillagerPositions(world);
+  const lotOwners = useMemo(() => new Map(world.citizens.map((c) => [c.lotId, c])), [world]);
+  const built = useMemo(() => builtUp(world), [world]);
+  const districtsInUse = DISTRICTS_2D.filter((d) => world.plots.some((p) => DISTRICT_OF_COLUMN[p.x] === d && built.plots.has(p.id)));
+  const rows = Math.max(1, ...[...built.lots].map((id) => Math.floor((Number(id.slice(1)) - 1) / 10) + 1));
+  const view = {
+    x0: districtsInUse.some((d) => d.id === 'west') ? -380 : -36,
+    x1: districtsInUse.some((d) => d.id === 'east') ? 1150 : 804,
+    y0: ISLET_TOP[Math.min(rows, ISLET_TOP.length) - 1]! - 26,
+    y1: districtsInUse.some((d) => d.id === 'south') ? 900 : 670,
+  };
   const occupants = useMemo(() => new Map(world.agents.map((a) => [a.plotId, a])), [world]);
   const selected = world.agents.find((a) => a.key === selectedKey);
   // Stable DOM order: moving SVG nodes between renders would cancel the walking transition.
   const ordered = world.agents.filter((a) => positions.has(a.key));
 
   return (
-    <svg className="city-map" viewBox="-36 6 840 664" role="group" aria-label={`Map of ${world.cityId === 'fixture-village' ? 'the fixture village' : 'the village'}`}>
+    <svg className="city-map" viewBox={`${view.x0} ${view.y0} ${view.x1 - view.x0} ${view.y1 - view.y0}`} role="group" aria-label={`Map of ${world.cityId === 'fixture-village' ? 'the demo village' : 'the village'}`}>
       <defs>
         <clipPath id="island-clip">
           <rect x="-40" y="0" width="860" height="680" />
         </clipPath>
       </defs>
       <Terrain />
+      <Newcomers lots={world.lots} owners={lotOwners} rows={Math.min(rows, ISLET_TOP.length)} shownLots={built.lots} />
+      {districtsInUse.map((d) => (
+        <DistrictIsland key={d.id} district={d} />
+      ))}
       {world.places.map((place) => (
         <PlaceMarker key={place.id} place={place} ruler={rulers?.places[place.id]?.ruler ?? null} />
       ))}
-      {world.plots.map((plot) => (
+      {world.plots.filter((plot) => built.plots.has(plot.id)).map((plot) => (
         <PlotMarker
           key={plot.id}
           plot={plot}
@@ -350,6 +561,11 @@ export function CityMap({
           onSelect={onSelect}
         />
       ))}
+      {world.citizens.map((citizen) =>
+        villagerPositions.has(citizen.key) ? (
+          <VillagerToken key={citizen.key} citizen={citizen} position={villagerPositions.get(citizen.key)!} {...(onSelectCitizen ? { onSelect: onSelectCitizen } : {})} />
+        ) : null,
+      )}
     </svg>
   );
 }

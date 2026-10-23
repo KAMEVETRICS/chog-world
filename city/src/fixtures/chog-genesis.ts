@@ -20,3 +20,17 @@ export function genesisLook(tokenId: number | string): ChogLook | null {
   });
   return { sourceTokenId: String(id), image: `${data.imageBase}${file}.webp`, traits: traits as ChogTraits };
 }
+
+/**
+ * Public IPFS gateways for the collection's images, in the order to try them. Public gateways throttle and
+ * stall; a portrait that fails on one tries the next before falling back to a drawing of the traits.
+ */
+const GATEWAYS = ['https://gateway.pinata.cloud/ipfs/', 'https://w3s.link/ipfs/', 'https://ipfs.io/ipfs/'];
+
+/** The same image on every gateway, starting with the one it was given on. */
+export function imageSources(image: string): string[] {
+  const at = GATEWAYS.find((g) => image.startsWith(g));
+  if (!at) return [image];
+  const path = image.slice(at.length);
+  return [image, ...GATEWAYS.filter((g) => g !== at).map((g) => g + path)];
+}

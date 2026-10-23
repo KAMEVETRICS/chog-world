@@ -29,7 +29,7 @@ export const FIXTURE_COLLECTION = '0x000000000000000000000000000000000000c172';
 export const FIXTURE_ACTORS = {
   A: { label: 'Holder A', address: '0xa11ce00000000000000000000000000000000a11' },
   B: { label: 'Holder B', address: '0xb0b0000000000000000000000000000000000b0b' },
-  C: { label: 'Citizen C', address: '0xc1c1000000000000000000000000000000000c1c' },
+  C: { label: 'Villager C', address: '0xc1c1000000000000000000000000000000000c1c' },
 } as const;
 export type FixtureActorId = keyof typeof FIXTURE_ACTORS;
 
@@ -52,6 +52,51 @@ const SEEDS: readonly Seed[] = [
   { name: 'Thimble', focus: 'builder', homeStyle: 'cottage' },
   { name: 'Burdock', focus: 'social', homeStyle: 'workshop' },
   { name: 'Quill', focus: 'builder', homeStyle: 'treehouse' },
+  { name: 'Marlow', focus: 'gatherer', homeStyle: 'cottage' },
+  { name: 'Pip', focus: 'builder', homeStyle: 'workshop' },
+  { name: 'Hazel', focus: 'social', homeStyle: 'treehouse' },
+  { name: 'Rook', focus: 'builder', homeStyle: 'cottage' },
+  { name: 'Tansy', focus: 'gatherer', homeStyle: 'workshop' },
+  { name: 'Cobble', focus: 'builder', homeStyle: 'treehouse' },
+  { name: 'Wren', focus: 'social', homeStyle: 'cottage' },
+  { name: 'Bracken', focus: 'builder', homeStyle: 'workshop' },
+  { name: 'Sage', focus: 'gatherer', homeStyle: 'treehouse' },
+  { name: 'Dill', focus: 'builder', homeStyle: 'cottage' },
+  { name: 'Moss', focus: 'social', homeStyle: 'workshop' },
+  { name: 'Alder', focus: 'builder', homeStyle: 'treehouse' },
+  { name: 'Fig', focus: 'gatherer', homeStyle: 'cottage' },
+  { name: 'Birch', focus: 'builder', homeStyle: 'workshop' },
+  { name: 'Lark', focus: 'social', homeStyle: 'treehouse' },
+  { name: 'Pebblin', focus: 'builder', homeStyle: 'cottage' },
+  { name: 'Rowan', focus: 'gatherer', homeStyle: 'workshop' },
+  { name: 'Clover', focus: 'builder', homeStyle: 'treehouse' },
+  { name: 'Thistle', focus: 'social', homeStyle: 'cottage' },
+  { name: 'Ember', focus: 'builder', homeStyle: 'workshop' },
+  { name: 'Nutmeg', focus: 'gatherer', homeStyle: 'treehouse' },
+  { name: 'Briar', focus: 'builder', homeStyle: 'cottage' },
+  { name: 'Juniperr', focus: 'social', homeStyle: 'workshop' },
+  { name: 'Acorn', focus: 'builder', homeStyle: 'treehouse' },
+];
+
+/**
+ * A lived-in demo village: residents who have been here a while, not eight identical arrivals. Some already
+ * have a first home; each holds different stores and feels a little different. Token 0 (Mossy) stays a fresh
+ * arrival on an empty lot, so the demo still shows a first build. Positions match SEEDS.
+ */
+interface History {
+  homeLevel: number;
+  stores: [wood: number, stone: number, food: number];
+  needs: [energy: number, hunger: number, fun: number, social: number];
+}
+const HISTORIES: readonly (History | null)[] = [
+  null,
+  { homeLevel: 1, stores: [9, 3, 6], needs: [72, 64, 85, 70] },
+  { homeLevel: 0, stores: [2, 5, 7], needs: [88, 76, 61, 82] },
+  { homeLevel: 0, stores: [11, 8, 3], needs: [66, 58, 74, 79] },
+  { homeLevel: 1, stores: [3, 6, 2], needs: [81, 70, 68, 63] },
+  { homeLevel: 1, stores: [2, 1, 6], needs: [77, 83, 90, 92] },
+  { homeLevel: 0, stores: [6, 1, 5], needs: [69, 88, 72, 66] },
+  { homeLevel: 0, stores: [1, 2, 8], needs: [92, 71, 86, 88] },
 ];
 
 export function fixtureIdentity(tokenId: string): AgentIdentity {
@@ -65,7 +110,7 @@ export function fixtureIdentity(tokenId: string): AgentIdentity {
   };
 }
 
-/** Villagers already living in the fixture district. Citizen C has not joined yet. */
+/** Villagers already living in the fixture district. Villager C has not joined yet. */
 const CITIZEN_SEEDS: ReadonlyArray<{ name: string; address: string; job: Job; look: VillagerLook }> = [
   { name: 'Nettle', address: '0x00000000000000000000000000000000c171ee01', job: 'farmhand', look: { Skin: 'Green', Head: 'Bucket Hat', Body: 'Vest', Eyes: 'Happy' } },
   { name: 'Basil', address: '0x00000000000000000000000000000000c171ee02', job: 'woodcutter', look: { Skin: 'Red', Head: 'Beanie', Body: 'Jacket', Eyes: 'Normal' } },
@@ -80,7 +125,52 @@ export function fixtureGenesisAccounts(world: WorldState): AccountEntry[] {
   ];
 }
 
-export function makeFixtureWorld(options: { residentCount?: number; active?: boolean; citizenCount?: number } = {}): WorldState {
+/**
+ * Fixture resident number `index` (its token ID too) on `plot`: holders alternate A, B, A, B. A newcomer starts
+ * with the admission grant, as on the server; `history` gives a lived-in start instead.
+ */
+export function fixtureResident(index: number, plot: Plot, active: boolean, history: History | null = null): AgentState {
+  const seed = SEEDS[index % SEEDS.length]!;
+  const tokenId = String(index);
+  const identity = fixtureIdentity(tokenId);
+  const actor = index % 2 === 0 ? FIXTURE_ACTORS.A : FIXTURE_ACTORS.B;
+  const [wood, stone, food] = history?.stores ?? [ADMISSION_GRANT.wood, ADMISSION_GRANT.stone, ADMISSION_GRANT.food];
+  const [energy, hunger, fun, social] = history?.needs ?? [NEED_START, NEED_START, NEED_START, NEED_START];
+  return {
+    key: makeAgentKey(identity),
+    identity,
+    name: seed.name,
+    control: {
+      kind: 'controlled',
+      controller: actor.address,
+      epoch: '1',
+      projectionGeneration: '1',
+      blockNumber: '0',
+      blockHash: '0x0',
+      observedAtMs: 0,
+    },
+    controlAvailability: 'verified',
+    plotId: plot.id,
+    location: { kind: 'plot', plotId: plot.id },
+    policy: { version: '1', active, focus: seed.focus, homeStyle: seed.homeStyle },
+    inventory: {
+      wood: { total: wood, reserved: 0 },
+      stone: { total: stone, reserved: 0 },
+      food: { total: food, reserved: 0 },
+    },
+    homeLevel: history?.homeLevel ?? 0,
+    homeStyle: seed.homeStyle,
+    construction: null,
+    lastGreetingTick: null,
+    needs: { energy, hunger, fun, social },
+    decor: [],
+    coins: 0,
+    offer: null,
+  };
+}
+
+/** `lived`: residents start with histories (the demo app); without it every resident is a fresh arrival (rules tests). */
+export function makeFixtureWorld(options: { residentCount?: number; active?: boolean; citizenCount?: number; lived?: boolean } = {}): WorldState {
   const residentCount = options.residentCount ?? 8;
   const lots = worldData.lots as Lot[];
   const citizens: CitizenState[] = CITIZEN_SEEDS.slice(0, options.citizenCount ?? CITIZEN_SEEDS.length).map((seed, index) => ({
@@ -105,43 +195,9 @@ export function makeFixtureWorld(options: { residentCount?: number; active?: boo
     throw new RangeError(`residentCount must be between 0 and ${plots.length}`);
   }
 
-  const agents: AgentState[] = SEEDS.slice(0, residentCount).map((seed, index) => {
-    const tokenId = String(index);
-    const identity = fixtureIdentity(tokenId);
-    const plot = plots[index]!;
-    const actor = index % 2 === 0 ? FIXTURE_ACTORS.A : FIXTURE_ACTORS.B;
-    return {
-      key: makeAgentKey(identity),
-      identity,
-      name: seed.name,
-      control: {
-        kind: 'controlled',
-        controller: actor.address,
-        epoch: '1',
-        projectionGeneration: '1',
-        blockNumber: '0',
-        blockHash: '0x0',
-        observedAtMs: 0,
-      },
-      controlAvailability: 'verified',
-      plotId: plot.id,
-      location: { kind: 'plot', plotId: plot.id },
-      policy: { version: '1', active, focus: seed.focus, homeStyle: seed.homeStyle },
-      inventory: {
-        wood: { total: ADMISSION_GRANT.wood, reserved: 0 },
-        stone: { total: ADMISSION_GRANT.stone, reserved: 0 },
-        food: { total: ADMISSION_GRANT.food, reserved: 0 },
-      },
-      homeLevel: 0,
-      homeStyle: seed.homeStyle,
-      construction: null,
-      lastGreetingTick: null,
-      needs: { energy: NEED_START, hunger: NEED_START, fun: NEED_START, social: NEED_START },
-      decor: [],
-      coins: 0,
-      offer: null,
-    };
-  });
+  const agents: AgentState[] = SEEDS.slice(0, residentCount).map((_, index) =>
+    fixtureResident(index, plots[index]!, active, options.lived ? HISTORIES[index] ?? null : null),
+  );
 
   return {
     cityId: worldData.cityId,

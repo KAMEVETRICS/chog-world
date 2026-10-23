@@ -1,7 +1,9 @@
 // Home level and the current build, as discrete eligible-tick steps.
 import type { AgentState } from '../../shared/contracts';
 import { MAX_HOME_LEVEL, recipeForLevel } from '../../shared/rules';
-import { STYLE_LABEL } from '../format';
+import { homeName, hours } from '../format';
+
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
 export function BuildingProgress({ agent }: { agent: AgentState }) {
   const c = agent.construction;
@@ -17,15 +19,14 @@ export function BuildingProgress({ agent }: { agent: AgentState }) {
         ))}
       </div>
       <p className="home-title">
-        {agent.homeLevel === 0 ? 'An empty lot' : `Level ${agent.homeLevel} ${STYLE_LABEL[agent.homeStyle].toLowerCase()}`}
+        {agent.homeLevel === 0 ? 'An empty lot' : `${cap(homeName(agent.homeStyle, agent.homeLevel))} · level ${agent.homeLevel}`}
       </p>
       {c ? (
         <div className="build">
           <p className="build-line">
-            Raising level {c.targetLevel} · <span className="num">{c.remainingTicks}</span> eligible{' '}
-            {c.remainingTicks === 1 ? 'tick' : 'ticks'} left
+            Raising level {c.targetLevel} · <span className="num">{hours(c.remainingTicks)}</span> of work left
           </p>
-          <ol className="build-steps" aria-label={`${done} of ${total} build ticks done`}>
+          <ol className="build-steps" aria-label={`${done} of ${total} hours of work done`}>
             {Array.from({ length: total }, (_, i) => (
               <li key={i} className={i < done ? 'is-done' : ''} />
             ))}
@@ -36,8 +37,7 @@ export function BuildingProgress({ agent }: { agent: AgentState }) {
         </div>
       ) : next ? (
         <p className="build-note">
-          Level {next.level} needs {next.costs.wood} wood, {next.costs.stone} stone and {next.costs.food} food, then{' '}
-          {next.buildTicks} ticks of work.
+          Level {next.level} needs {next.costs.wood} wood, {next.costs.stone} stone and {next.costs.food} food, then {hours(next.buildTicks)} of work.
         </p>
       ) : (
         <p className="build-note">Fully built. This home is finished.</p>

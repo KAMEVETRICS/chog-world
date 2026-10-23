@@ -11,7 +11,7 @@ import { canonicalJson, canonicalJsonReference, step } from '../../../src/simula
 const A = FIXTURE_ACTORS.A.address;
 const C = FIXTURE_ACTORS.C.address;
 
-/** A fixture world plus its books, with Citizen C joined and every Chog holding some coins. */
+/** A fixture world plus its books, with Villager C joined and every Chog holding some coins. */
 function setup() {
   let world = makeFixtureWorld();
   const accounts: AccountEntry[] = fixtureGenesisAccounts(world);

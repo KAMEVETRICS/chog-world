@@ -21,10 +21,27 @@ export const LOTS: Record<string, { x: number; z: number; r: number }> = Object.
   ROWS.flatMap((row, ri) => COLUMNS.map((x, ci) => [`c${String(ri * COLUMNS.length + ci + 1).padStart(2, '0')}`, { x, z: row.z, r: row.r }])),
 );
 
-const ISLET = { x0: -9.2, x1: 9.2, z0: -21.2, z1: -13.0, r: 1.6 };
+const ISLET = { x0: -9.2, x1: 9.2, z1: -13.0, r: 1.6 };
+/** The islet's far (north) edge for each number of rows in use: it grows a row at a time as villagers move in. */
+const NORTH_EDGE = [-16.6, -19.3, -21.2];
+
+/** Rows of Newcomers' Row in use (1-3), given the lots that exist on the ground. */
+export function rowsInUse(lotIds: Iterable<string>): number {
+  let rows = 1;
+  for (const id of lotIds) rows = Math.max(rows, Math.floor((Number(id.slice(1)) - 1) / COLUMNS.length) + 1);
+  return Math.min(rows, ROWS.length);
+}
 /** The front lane (row 1's gates), the back lane (between rows 2 and 3) and the path joining them. */
 const LANES = { front: -14.0, back: -18.6 };
 const BRIDGE = { z0: -13.25, z1: -9.55, width: 0.9 };
+
+/** The islet's walkways, for routing villagers: both lanes, the path joining them, and the bridge to the village. */
+export const DISTRICT_PATHS: XZ[][] = [
+  [[-8.3, LANES.front], [8.3, LANES.front]],
+  [[-8.3, LANES.back], [8.3, LANES.back]],
+  [[0, LANES.front], [0, LANES.back]],
+  [[0, LANES.front], [0, BRIDGE.z0], [0, BRIDGE.z1], [0.1, -8.6]],
+];
 
 /** Where villagers cross to the village: the bridge's two ends. */
 export const BRIDGE_ENDS: [XZ, XZ] = [
@@ -32,8 +49,9 @@ export const BRIDGE_ENDS: [XZ, XZ] = [
   [0, BRIDGE.z1 - 0.3],
 ];
 
-function isletShape(grow = 0): THREE.Shape {
-  const { x0, x1, z0, z1, r } = ISLET;
+function isletShape(rows: number, grow = 0): THREE.Shape {
+  const { x0, x1, z1, r } = ISLET;
+  const z0 = NORTH_EDGE[rows - 1]!;
   const s = new THREE.Shape();
   const [a0, a1, b0, b1] = [x0 - grow, x1 + grow, -z1 - grow, -z0 + grow]; // shape space is (x, -z)
   s.moveTo(a0 + r, b0);
@@ -48,18 +66,18 @@ function isletShape(grow = 0): THREE.Shape {
   return s;
 }
 
-export const District3D = memo(function District3D() {
+export const District3D = memo(function District3D({ rows }: { rows: number }) {
   const [top, lower, foam] = useMemo(() => {
-    const t = new THREE.ExtrudeGeometry(isletShape(), { depth: 0.55, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.1, bevelSegments: 1, curveSegments: 6 });
+    const t = new THREE.ExtrudeGeometry(isletShape(rows), { depth: 0.55, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.1, bevelSegments: 1, curveSegments: 6 });
     t.rotateX(-Math.PI / 2);
     t.translate(0, -0.63, 0);
-    const l = new THREE.ExtrudeGeometry(isletShape(-0.1), { depth: 1.3, bevelEnabled: false, curveSegments: 6 });
+    const l = new THREE.ExtrudeGeometry(isletShape(rows, -0.1), { depth: 1.3, bevelEnabled: false, curveSegments: 6 });
     l.rotateX(-Math.PI / 2);
     l.translate(0, -1.85, 0);
-    const f = new THREE.ShapeGeometry(isletShape(0.35), 6);
+    const f = new THREE.ShapeGeometry(isletShape(rows, 0.35), 6);
     f.rotateX(-Math.PI / 2);
     return [t, l, f];
-  }, []);
+  }, [rows]);
   const length = BRIDGE.z1 - BRIDGE.z0;
   const planks = Math.round(length / 0.32);
   return (
@@ -71,8 +89,12 @@ export const District3D = memo(function District3D() {
       </mesh>
       {/* lanes along the rows, and the path from the bridge through the middle */}
       <mesh geometry={geo.box(16.6, 0.02, 0.7)} material={toon('#e6d4ab')} position={[0, 0.01, LANES.front]} receiveShadow />
-      <mesh geometry={geo.box(16.6, 0.02, 0.6)} material={toon('#e6d4ab')} position={[0, 0.01, LANES.back]} receiveShadow />
-      <mesh geometry={geo.box(0.9, 0.021, LANES.front - LANES.back)} material={toon('#e6d4ab')} position={[0, 0.01, (LANES.front + LANES.back) / 2]} receiveShadow />
+      {rows >= 2 ? (
+        <>
+          <mesh geometry={geo.box(16.6, 0.02, 0.6)} material={toon('#e6d4ab')} position={[0, 0.01, LANES.back]} receiveShadow />
+          <mesh geometry={geo.box(0.9, 0.021, LANES.front - LANES.back)} material={toon('#e6d4ab')} position={[0, 0.01, (LANES.front + LANES.back) / 2]} receiveShadow />
+        </>
+      ) : null}
       {/* the footbridge to the village's north lane */}
       <group position={[0, 0, (BRIDGE.z0 + BRIDGE.z1) / 2]}>
         {Array.from({ length: planks }, (_, i) => (

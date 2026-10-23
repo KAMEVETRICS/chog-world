@@ -8,8 +8,10 @@ export const DEFAULT_WEARS: readonly number[] = [1, 186, 173, 75, 93, 862, 981, 
 
 /** Look for fixture resident `tokenId` (0, 1, 2...) wearing the given Chog Genesis tokens. */
 export function fixtureLook(tokenId: string, wears: readonly number[] = DEFAULT_WEARS): ChogLook | null {
-  const worn = wears[Number(tokenId)];
-  return worn === undefined ? null : genesisLook(worn);
+  const n = Number(tokenId);
+  // Past the line-up, each newcomer wears a token spread across the collection, so no two look alike.
+  const worn = wears[n] ?? 1 + ((n * 761) % GENESIS_SUPPLY);
+  return genesisLook(worn);
 }
 
 /** `count` distinct random Chog Genesis token IDs. */

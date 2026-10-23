@@ -1,4 +1,4 @@
-// Fixture-only: enact a rule change directly, the way a passed vote will once voting opens.
+// Demo village only: enact a rule change directly, the way a passed vote will once voting opens.
 import { useState } from 'react';
 import type { FixtureCityClient } from '../../fixtures/fixture-client';
 
@@ -7,23 +7,23 @@ const CHANGES: ReadonlyArray<{ label: string; proposal: Record<string, number> |
   { label: 'Try raising the wage by 5', proposal: (wage) => ({ wage: wage + 5 }) },
 ];
 
-export function TownFixtureTools({ client }: { client: FixtureCityClient }) {
+export function TownFixtureTools({ client, stepAway }: { client: FixtureCityClient; stepAway?: (pass: () => void) => void }) {
   const [message, setMessage] = useState<string | null>(null);
   const enact = async (proposal: (typeof CHANGES)[number]['proposal']) => {
     const wage = (await client.getSnapshot()).world.params.values.wage;
     const result = client.enactParams(typeof proposal === 'function' ? proposal(wage) : proposal);
-    setMessage(result.ok ? 'Enacted. The new numbers apply from the next tick.' : `Refused by the constitution: ${result.problems.join(' ')}`);
+    setMessage(result.ok ? 'Done. The new numbers apply from the next hour.' : `Not allowed by the city rules: ${result.problems.join(' ')}`);
   };
   return (
-    <aside className="fixture-tools" aria-label="Fixture tools">
-      <p className="fixture-tools-title">Fixture tools</p>
-      <p className="fixture-tools-hint">Enacts a change the way a passed vote will, through the same constitution check.</p>
+    <aside className="fixture-tools" aria-label="Demo tools">
+      <p className="fixture-tools-title">Demo tools</p>
+      <p className="fixture-tools-hint">Changes a rule the way a passed vote would, checked against the same city rules.</p>
       {CHANGES.map((c) => (
         <button key={c.label} type="button" className="button button--quiet" onClick={() => void enact(c.proposal)}>
           {c.label}
         </button>
       ))}
-      <p className="fixture-tools-hint">Runs 36 ticks at once, so a vote opened now closes.</p>
+      <p className="fixture-tools-hint">Runs a whole village day at once, so a vote opened now closes.</p>
       <button
         type="button"
         className="button button--quiet"
@@ -34,6 +34,25 @@ export function TownFixtureTools({ client }: { client: FixtureCityClient }) {
       >
         Skip a village day
       </button>
+      <p className="fixture-tools-hint">Brings in one more Chog, the way a holder does on the live server. Watch the town grow to fit.</p>
+      <button
+        type="button"
+        className="button button--quiet"
+        onClick={() => {
+          const name = client.welcomeChog();
+          setMessage(name ? `${name} moved in.` : 'Every plot in town is taken.');
+        }}
+      >
+        A new Chog moves in
+      </button>
+      {stepAway ? (
+        <>
+          <p className="fixture-tools-hint">Leaves the village for a day, then shows the "While you were away" recap.</p>
+          <button type="button" className="button button--quiet" onClick={() => stepAway(() => client.skipDay())}>
+            Step away for a village day
+          </button>
+        </>
+      ) : null}
       <p className="fixture-tools-hint" role="status" aria-live="polite">
         {message ?? ''}
       </p>

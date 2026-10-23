@@ -1,5 +1,5 @@
-// A Chog's coins, the Plaza market, its job offer and gifts. Everyone sees prices and the offer; only the
-// holder can trade, hire or give.
+// A Chog's market and council tabs. Everyone sees prices and the offer; only the holder can trade, hire, give,
+// instruct, speak or propose.
 import { useState } from 'react';
 import { JOBS, RESOURCES, type AgentState, type Job, type WorldState } from '../../shared/contracts';
 import { OFFER_WAGE_MAX, OFFER_WAGE_MIN } from '../../shared/rules';
@@ -94,7 +94,7 @@ function Hiring({ agent, world, canEdit, onAct }: { agent: AgentState; world: Wo
     <div className="hiring">
       <p className="readonly-note">
         {offer
-          ? `Hiring a ${JOB_LABEL[offer.job].toLowerCase()} at ${offer.wage} coins a tick${employee ? `, worked by ${employee.name}` : ', open to any villager'}.`
+          ? `Hiring a ${JOB_LABEL[offer.job].toLowerCase()} at ${offer.wage} coins an hour${employee ? `, worked by ${employee.name}` : ', open to any villager'}.`
           : 'Not hiring.'}
       </p>
       {canEdit ? (
@@ -132,37 +132,71 @@ function Hiring({ agent, world, canEdit, onAct }: { agent: AgentState; world: Wo
           <ActionStatus status={status} />
         </form>
       ) : null}
-      {canEdit ? <p className="setting-hint">A hired villager's work goes into this Chog's stores. Each tick worked costs the wage, if the Chog has the coins.</p> : null}
+      {canEdit ? <p className="setting-hint">A hired villager's work goes into this Chog's stores. Each hour worked costs the wage, if the Chog has the coins.</p> : null}
     </div>
   );
 }
 
-export function ChogEconomy({ agent, world, isMine, onAct, instructions }: { agent: AgentState; world: WorldState; isMine: boolean; onAct: OnAct; instructions?: InstructionsPort }) {
+/** The Market tab: the Chog's purse, the Plaza market, its job offer and gifts. */
+export function ChogMarket({ agent, world, isMine, onAct }: { agent: AgentState; world: WorldState; isMine: boolean; onAct: OnAct }) {
   const canEdit = isMine && agent.control.kind === 'controlled';
   return (
-    <section className="panel-section" aria-labelledby="econ-h">
-      <h3 id="econ-h" className="section-title">
-        Market and work <span className="section-aside">{agent.coins} coins</span>
-      </h3>
-      <Market agent={agent} world={world} canEdit={canEdit} onAct={onAct} />
-      <h4 className="econ-subtitle">Hiring</h4>
-      <Hiring key={agent.key} agent={agent} world={world} canEdit={canEdit} onAct={onAct} />
+    <>
+      <p className="tab-lede">
+        {agent.name} has <strong className="num">{agent.coins}</strong> {agent.coins === 1 ? 'coin' : 'coins'}.{' '}
+        {canEdit ? 'Sell spare materials for coins, or buy what it is short of.' : 'Its holder can trade, hire and give from here.'}
+      </p>
+      <section className="panel-section" aria-labelledby="econ-h">
+        <h3 id="econ-h" className="section-title">
+          Buy and sell
+        </h3>
+        <Market agent={agent} world={world} canEdit={canEdit} onAct={onAct} />
+      </section>
+      <section className="panel-section" aria-labelledby="hire-h">
+        <h3 id="hire-h" className="section-title">
+          Hiring
+        </h3>
+        <Hiring key={agent.key} agent={agent} world={world} canEdit={canEdit} onAct={onAct} />
+      </section>
       {canEdit ? (
-        <>
-          {instructions ? (
-            <>
-              <h4 className="econ-subtitle">Standing instructions</h4>
-              <Instructions agent={agent} load={instructions.load} save={instructions.save} />
-            </>
-          ) : null}
-          <h4 className="econ-subtitle">Speak at the council</h4>
-          <SpeakForm key={`speak-${agent.key}`} agent={agent} world={world} onAct={onAct} />
-          <h4 className="econ-subtitle">Propose for the city</h4>
-          <ProposeForm key={`propose-${agent.key}`} agent={agent} world={world} onAct={onAct} />
-          <h4 className="econ-subtitle">Give a gift</h4>
+        <section className="panel-section" aria-labelledby="gift-chog-h">
+          <h3 id="gift-chog-h" className="section-title">
+            Give a gift
+          </h3>
           <GiftForm key={agent.key} world={world} from={{ kind: 'chog', key: agent.key, expectedEpoch: agent.control.epoch }} fromKey={agent.key} canGiveMaterials onAct={onAct} />
-        </>
+        </section>
       ) : null}
-    </section>
+    </>
+  );
+}
+
+/** The Council tab (holder only): private instructions, speaking on open proposals, and proposing. */
+export function ChogCouncil({ agent, world, onAct, instructions }: { agent: AgentState; world: WorldState; onAct: OnAct; instructions?: InstructionsPort }) {
+  return (
+    <>
+      <p className="tab-lede">
+        Every morning the Chogs meet at the council. {agent.name} may put one idea forward and speak for or against the others. Villagers then vote.
+      </p>
+      {instructions ? (
+        <section className="panel-section" aria-labelledby="instruct-h">
+          <h3 id="instruct-h" className="section-title">
+            Your private advice
+          </h3>
+          <Instructions agent={agent} load={instructions.load} save={instructions.save} />
+        </section>
+      ) : null}
+      <section className="panel-section" aria-labelledby="council-h">
+        <h3 id="council-h" className="section-title">
+          Speak at the council
+        </h3>
+        <SpeakForm key={`speak-${agent.key}`} agent={agent} world={world} onAct={onAct} />
+      </section>
+      <section className="panel-section" aria-labelledby="propose-h">
+        <h3 id="propose-h" className="section-title">
+          Propose for the city
+        </h3>
+        <ProposeForm key={`propose-${agent.key}`} agent={agent} world={world} onAct={onAct} />
+      </section>
+    </>
   );
 }

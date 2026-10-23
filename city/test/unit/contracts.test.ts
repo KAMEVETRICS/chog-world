@@ -46,12 +46,12 @@ describe('makeAgentKey', () => {
 });
 
 describe('fixture world', () => {
-  it('has 8 residents on 12 unique plots, starting at token zero', () => {
+  it('has 8 residents on unique plots (12 on the main island, 24 more in growth districts), starting at token zero', () => {
     const world = makeFixtureWorld();
     expect(world.agents).toHaveLength(8);
-    expect(world.plots).toHaveLength(12);
-    expect(new Set(world.plots.map((p) => p.id)).size).toBe(12);
-    expect(new Set(world.plots.map((p) => `${p.x},${p.y}`)).size).toBe(12);
+    expect(world.plots).toHaveLength(36);
+    expect(new Set(world.plots.map((p) => p.id)).size).toBe(36);
+    expect(new Set(world.plots.map((p) => `${p.x},${p.y}`)).size).toBe(36);
     expect(new Set(world.agents.map((a) => a.plotId)).size).toBe(8);
     expect(world.agents[0]!.identity.tokenId).toBe('0');
     expect(world.agents[0]!.identity.agentId).toBe('0');

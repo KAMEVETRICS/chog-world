@@ -12,13 +12,27 @@ import { useCity } from './api/city-client';
 import type { HttpCityClient, SiteInfo } from './api/http-client';
 import { appearanceFor, lookOf, redressVillage, useWears } from './looks';
 import { ActivityFeed } from './activity/ActivityFeed';
-import { ResidentPanel } from './resident/ResidentPanel';
+import { ResidentPanel, type SheetSection } from './resident/ResidentPanel';
 import { CityMap } from './world/CityMap';
 import { PlaceList } from './world/PlaceList';
 import { TownPanel } from './town/TownPanel';
 import { TownFixtureTools } from './town/TownFixtureTools';
 import { dayNumber, fractionalTick, phaseName, timeOfDay } from './world3d/daylight';
+import { dayOf } from '../simulation/citizens';
+import { goalsFor, type Goal } from './guide/goals';
+import { useGuideMemory, useWelcomed } from './guide/memory';
+import { TodayGoals } from './guide/TodayGoals';
+import { Welcome, type WelcomeChoice } from './guide/Welcome';
+import { RecapCard } from './recap/RecapCard';
+import { useRecap } from './recap/useRecap';
+import { growthOf } from './town/rank';
+import { useCelebrations } from './fx/celebrations';
+import { CelebrationBanner, SoundToggle } from './fx/CelebrationBanner';
+import type { CityEvent } from '../shared/contracts';
+
+const NO_EVENTS: readonly CityEvent[] = [];
 import './app.css';
+import './guide/guide.css';
 
 const Scene3D = lazy(() => import('./world3d/Scene3D'));
 
@@ -33,6 +47,8 @@ const TABS: { id: Tab; label: string }[] = [
 
 function supportsWebGL(): boolean {
   if (typeof window === 'undefined' || typeof window.WebGL2RenderingContext === 'undefined') return false;
+  // ?view=map asks for the flat map: lighter on slow devices, and handy for checking it.
+  if (new URLSearchParams(window.location.search).get('view') === 'map') return false;
   try {
     return !!document.createElement('canvas').getContext('webgl2');
   } catch {
@@ -81,7 +97,7 @@ function Clock({ nextDueAt, tick }: { nextDueAt: string; tick: string }) {
   const r = 9;
   const circumference = 2 * Math.PI * r;
   return (
-    <div className="clock hud-card" aria-label={`Day ${dayNumber(ft)}, ${phaseName(tod)}. Tick ${tick}. Next tick in ${Math.ceil(remaining / 1000)} seconds.`}>
+    <div className="clock hud-card" aria-label={`Day ${dayNumber(ft)}, ${phaseName(tod)}. The next hour starts in ${Math.ceil(remaining / 1000)} seconds.`}>
       <svg width="26" height="26" viewBox="-13 -13 26 26" aria-hidden="true">
         <circle r={r} className="clock-track" />
         <circle
@@ -97,9 +113,10 @@ function Clock({ nextDueAt, tick }: { nextDueAt: string; tick: string }) {
           Day {dayNumber(ft)} · {phaseName(tod)}
         </span>
         <span className="clock-next num">
-          Tick {tick} · next in {Math.ceil(remaining / 1000)}s
+          Next hour in {Math.ceil(remaining / 1000)}s
         </span>
       </span>
+      <SoundToggle />
     </div>
   );
 }
@@ -110,9 +127,13 @@ const holderName = (address: string) => {
 };
 
 /** Fixture mode runs the village in the browser; server mode follows the Chog server with wallet sign-in. */
-export type AppProps =
+export type AppProps = (
   | { client: FixtureCityClient; server?: undefined }
-  | { client: HttpCityClient; server: { site: SiteInfo } };
+  | { client: HttpCityClient; server: { site: SiteInfo } }
+) & {
+  /** Show the first-visit welcome and the goals card. The real app turns it on; most tests leave it off. */
+  onboarding?: boolean;
+};
 
 export function App(props: AppProps) {
   const { client } = props;
@@ -132,7 +153,10 @@ export function App(props: AppProps) {
     if (live) void refresh();
   }, [live, me, refresh]);
   const [focusNonce, setFocusNonce] = useState(0);
+  const [sheet, setSheet] = useState<SheetSection>('life');
   const narrow = useMediaQuery('(max-width: 760px)');
+  // Below laptop width the goals card starts folded, so the village keeps the middle of the screen.
+  const compact = useMediaQuery('(max-width: 1100px)');
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const [panelOpen, setPanelOpen] = useState(() => initial.tab === 'cult' || !(typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches));
   const webgl = useMemo(supportsWebGL, []);
@@ -145,6 +169,57 @@ export function App(props: AppProps) {
 
   useEffect(() => writeUrl(selected?.identity.tokenId ?? null, tab), [selected?.identity.tokenId, tab]);
 
+  // Onboarding: the welcome, and goals for whoever is playing (a visitor gets first steps).
+  const onboarding = props.onboarding ?? false;
+  const [welcomed, markWelcomed] = useWelcomed();
+  const [showWelcome, setShowWelcome] = useState(() => onboarding && !welcomed);
+  const myAddress = props.server ? me : actor ? FIXTURE_ACTORS[actor].address : null;
+  const myCitizen = world && myAddress ? world.citizens.find((c) => c.address === myAddress.toLowerCase()) ?? null : null;
+  const myKeys = useMemo(() => new Set([...mineKeys, ...(myCitizen ? [myCitizen.key] : [])]), [mineKeys, myCitizen]);
+  const { banner, dismissBanner, bursts, burstDone } = useCelebrations({
+    events: snapshot?.recentEvents ?? NO_EVENTS,
+    world,
+    mine: myKeys,
+    enabled: onboarding,
+    confetti: !reducedMotion,
+  });
+  const goalScope = !world || (!myCitizen && mine.length === 0) ? 'first' : dayOf(world.tick);
+  const guide = useGuideMemory(world?.cityId ?? '', myAddress ?? 'visitor', goalScope);
+  const { recap, dismiss: dismissRecap, stepAway } = useRecap({ world, who: myAddress, enabled: onboarding, persist: Boolean(props.server) });
+  const { markSeen, markDone } = guide;
+  const recentEvents = snapshot?.recentEvents;
+  const goals = useMemo(
+    () =>
+      world && recentEvents
+        ? goalsFor({ world, events: recentEvents, citizen: myCitizen, chogs: mine, signedIn: myAddress !== null, seen: guide.seen, doneBefore: guide.doneBefore })
+        : null,
+    [world, recentEvents, myCitizen, mine, myAddress, guide.seen, guide.doneBefore],
+  );
+  useEffect(() => {
+    if (!goals) return;
+    const done = goals.goals.filter((g) => g.done).map((g) => g.id);
+    markDone(done, goals.goals.length > 0 && done.length === goals.goals.length);
+  }, [goals, markDone]);
+
+  // "Show me": open the right tab, then scroll the right section into view and flash it.
+  const [pointAt, setPointAt] = useState<{ anchor: string; n: number } | null>(null);
+  useEffect(() => {
+    if (!pointAt) return;
+    const id = window.requestAnimationFrame(() => {
+      const heading = document.getElementById(pointAt.anchor);
+      if (!heading) return;
+      const section = heading.tagName === 'H3' ? heading.closest('section') ?? heading : heading;
+      heading.scrollIntoView?.({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+      section.classList.remove('is-pointed');
+      void (section as HTMLElement).offsetWidth; // restart the flash
+      section.classList.add('is-pointed');
+    });
+    return () => window.cancelAnimationFrame(id);
+  }, [pointAt, reducedMotion]);
+  const point = (anchor: string) => setPointAt((p) => ({ anchor, n: (p?.n ?? 0) + 1 }));
+  const [accountRequest, setAccountRequest] = useState<{ n: number; bring: boolean } | undefined>(undefined);
+  const askAccount = (bring: boolean) => setAccountRequest((r) => ({ n: (r?.n ?? 0) + 1, bring }));
+
   const select = useCallback(
     (key: string) => {
       const agent = world?.agents.find((a) => a.key === key);
@@ -153,8 +228,10 @@ export function App(props: AppProps) {
       setTab('resident');
       setFocusNonce((n) => n + 1);
       setPanelOpen(true);
+      markSeen('met');
+      if (mineKeys.has(key)) markSeen('checkin');
     },
-    [world],
+    [world, mineKeys, markSeen],
   );
 
   const selectCitizen = useCallback(() => {
@@ -180,6 +257,51 @@ export function App(props: AppProps) {
     fixture?.setActor(next);
     setActorState(next);
     void refresh();
+  };
+
+  useEffect(() => {
+    if (tab === 'log') markSeen('log');
+  }, [tab, markSeen]);
+
+  const openTab = (next: Tab, anchor?: string) => {
+    setTab(next);
+    setPanelOpen(true);
+    if (anchor) point(anchor);
+  };
+
+  const showGoal = (goal: Goal) => {
+    const target = goal.target;
+    if (target.kind === 'chog') {
+      select(target.key);
+      if (target.section) setSheet(target.section);
+      if (target.anchor) point(target.anchor);
+    } else if (target.kind === 'town') openTab('town', target.anchor);
+    else if (target.kind === 'log') openTab('log');
+    else moveIn();
+  };
+
+  /** Become a villager: in the demo village, play as Villager C; live, sign in first. Then show the join form. */
+  const moveIn = () => {
+    if (fixture) switchActor('C');
+    else if (!me) askAccount(false);
+    openTab('town', 'you-h');
+  };
+
+  const chooseWelcome = (choice: WelcomeChoice) => {
+    setShowWelcome(false);
+    markWelcomed();
+    if (choice === 'villager') moveIn();
+    else if (choice === 'holder') {
+      if (fixture) {
+        switchActor('A');
+        const first = world?.agents.find((a) => a.control.controller === FIXTURE_ACTORS.A.address);
+        if (first) {
+          setSelectedToken(first.identity.tokenId);
+          setFocusNonce((n) => n + 1);
+        }
+        openTab('resident');
+      } else askAccount(true);
+    } else if (fixture) switchActor(null);
   };
 
   const save = useCallback(
@@ -252,12 +374,11 @@ export function App(props: AppProps) {
     );
   }
 
-  const built = world.agents.filter((a) => a.homeLevel > 0).length;
-  const myAddress = props.server ? me : actor ? FIXTURE_ACTORS[actor].address : null;
+  const growth = growthOf(world);
   const fixtureTools =
     fixture && selected && selected.control.kind === 'controlled' ? (
-      <aside className="fixture-tools" aria-label="Fixture tools">
-        <p className="fixture-tools-title">Fixture tools</p>
+      <aside className="fixture-tools" aria-label="Demo tools">
+        <p className="fixture-tools-title">Demo tools</p>
         <p className="fixture-tools-hint">Simulates an NFT sale through the same rule a real transfer uses.</p>
         <button type="button" className="button button--quiet" onClick={() => fixture.simulateTransfer(selected.key)}>
           Sell {selected.name} to{' '}
@@ -272,7 +393,7 @@ export function App(props: AppProps) {
 
   const flatMap = (
     <div className="flat-stage">
-      <CityMap world={world} selectedKey={selected?.key ?? null} onSelect={select} rulers={rulers} />
+      <CityMap world={world} selectedKey={selected?.key ?? null} onSelect={select} onSelectCitizen={selectCitizen} rulers={rulers} />
     </div>
   );
 
@@ -297,6 +418,10 @@ export function App(props: AppProps) {
               onSelect={select}
               onSelectCitizen={selectCitizen}
               rulers={rulers}
+              events={snapshot.recentEvents}
+              mine={myKeys}
+              bursts={bursts}
+              onBurstDone={burstDone}
             />
           </Suspense>
         ) : (
@@ -317,8 +442,16 @@ export function App(props: AppProps) {
         <div>
           <h1 className="brand-name">Chog City</h1>
           <p className="brand-sub">
-            <span className="num">{world.agents.length}</span> Chogs · <span className="num">{world.citizens.length}</span> villagers · <span className="num">{built}</span> homes built
+            <span className="brand-rank">{growth.rank.name}</span> · <span className="num">{world.agents.length}</span> Chogs · <span className="num">{world.citizens.length}</span> villagers
           </p>
+          <span
+            className="brand-growth"
+            role="img"
+            aria-label={growth.next ? `${growth.points} of ${growth.next.from} growth to become a ${growth.next.name}` : `${growth.rank.name}: fully grown`}
+            title={growth.next ? `${growth.next.from - growth.points} more growth to become a ${growth.next.name}` : 'Fully grown'}
+          >
+            <span style={{ width: `${Math.round(growth.progress * 100)}%` }} />
+          </span>
         </div>
       </header>
 
@@ -327,11 +460,11 @@ export function App(props: AppProps) {
       </div>
 
       {props.server ? (
-        <AccountBar client={props.client} site={props.server.site} me={me} onSession={setMe} onAdmitted={admitted} />
+        <AccountBar client={props.client} site={props.server.site} me={me} onSession={setMe} onAdmitted={admitted} {...(accountRequest ? { request: accountRequest } : {})} />
       ) : (
-        <div className="hud hud-fixture hud-card" role="region" aria-label="Fixture mode">
-          <span className="fixture-badge">Fixture village</span>
-          <span className="fixture-note">Scripted local demo. No wallet or chain is connected.</span>
+        <div className="hud hud-fixture hud-card" role="region" aria-label="Demo village" data-occluder>
+          <span className="fixture-badge">Demo village</span>
+          <span className="fixture-note">A practice village on this computer. No wallet or blockchain is connected.</span>
           <div className="viewer" role="radiogroup" aria-label="Viewing as">
             {([null, 'A', 'B', 'C'] as const).map((id) => (
               <button
@@ -346,11 +479,49 @@ export function App(props: AppProps) {
               </button>
             ))}
           </div>
-          <button type="button" className="button button--quiet button--small" onClick={() => props.client.tick()}>
-            Advance a tick
+          <button type="button" className="button button--quiet button--small skip-hour" onClick={() => props.client.tick()} title="Skip an hour">
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+              <path d="M2.5 3.5 L8 8 L2.5 12.5 Z M8 3.5 L13.5 8 L8 12.5 Z" fill="currentColor" />
+            </svg>
+            <span className="skip-hour-label">Skip an hour</span>
           </button>
         </div>
       )}
+
+      {onboarding && goals && !showWelcome ? (
+        <TodayGoals
+          key={`${myAddress ?? 'visitor'}:${goals.scope === 'first' ? 'first' : 'day'}`}
+          list={goals}
+          streak={guide.streak}
+          defaultOpen={!compact}
+          onShow={showGoal}
+          onHowToPlay={() => setShowWelcome(true)}
+        />
+      ) : null}
+
+      {onboarding && recap && !showWelcome ? (
+        <RecapCard
+          recap={recap}
+          world={world}
+          onClose={dismissRecap}
+          onVisit={(key) => {
+            dismissRecap();
+            select(key);
+          }}
+        />
+      ) : null}
+
+      {onboarding && banner && !showWelcome && !recap ? <CelebrationBanner moment={banner} onDone={dismissBanner} /> : null}
+
+      {onboarding && showWelcome ? (
+        <Welcome
+          cast={{
+            chog: world.agents[0] ? { name: world.agents[0].name, image: lookOf(world.agents[0])?.image ?? null, appearance: appearanceFor(world.agents[0]) } : null,
+            villager: world.citizens[0] ? { name: world.citizens[0].name, look: world.citizens[0].look } : null,
+          }}
+          onChoose={chooseWelcome}
+        />
+      ) : null}
 
       {error ? (
         <p className="hud hud-alert" role="alert">
@@ -364,7 +535,7 @@ export function App(props: AppProps) {
         </p>
       ) : null}
 
-      <aside className={`hud panel hud-card${panelOpen ? '' : ' is-collapsed'}`} aria-label="Village journal">
+      <aside className={`hud panel hud-card${panelOpen ? '' : ' is-collapsed'}`} aria-label="Village journal" data-occluder>
         <div className="panel-bar">
           <div className="tabs" role="tablist" aria-label="Panels">
             {tabs.map((t) => (
@@ -425,6 +596,8 @@ export function App(props: AppProps) {
               }
               look={lookOf(selected)}
               appearance={appearanceFor(selected)}
+              section={sheet}
+              onSection={setSheet}
             />
           ) : null}
           {tab === 'resident' && !selected ? (
@@ -435,12 +608,12 @@ export function App(props: AppProps) {
               world={world}
               myAddress={myAddress}
               canJoin={props.server ? Boolean(props.server.site.citizens) : true}
-              signInHint={props.server ? 'Sign in with your wallet to join. No Chog NFT needed.' : 'Pick Holder A, Holder B or Citizen C above to play as someone.'}
+              signInHint={props.server ? 'Sign in with your wallet to join. No Chog NFT needed.' : 'Pick Holder A, Holder B or Villager C above to play as someone.'}
               onJoin={join}
               onJob={setJob}
               onAct={act}
               myChogs={world.agents.filter((a) => mineKeys.has(a.key))}
-              fixtureTools={fixture ? <TownFixtureTools client={fixture} /> : undefined}
+              fixtureTools={fixture ? <TownFixtureTools client={fixture} {...(onboarding ? { stepAway } : {})} /> : undefined}
             />
           ) : null}
           {tab === 'cult' && props.server ? <CultPanel address={me} onSessionLost={signedOut} /> : null}

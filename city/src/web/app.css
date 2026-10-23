@@ -585,9 +585,12 @@
   display: flex;
   gap: var(--s-4);
   padding: 0 var(--s-5);
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .tab {
+  flex-shrink: 0;
   position: relative;
   padding: 14px 0 12px;
   border: 0;

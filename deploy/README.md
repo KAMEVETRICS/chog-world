@@ -101,7 +101,7 @@ restarts are fast: the progress is stored. If the RPC times out at startup, Dock
 
 - `https://world.example.com/api/health` answers `{"status":"ok",...}`.
 - `https://world.example.com/city/` shows the village (empty at first) and **Sign in with wallet**.
-- `https://world.example.com/cult/` shows the Cult.
+- `https://world.example.com/city/?tab=cult` opens Cult inside City's shared interface. Old `/cult/` URLs redirect there.
 - Sign in, use **Bring a Chog** with an awakened Chog Genesis token, and it moves into the next free plot
   and joins the Cult. A Chog must be awakened on the adapter (`awaken(tokenId, agentURI)`) first.
 

@@ -3,7 +3,7 @@ import type { WorldState } from '../../shared/contracts';
 import { placeName } from '../format';
 import { FACTION_NAME, RULED_PLACES, type Rulers } from './rulers';
 
-export function CultRulers({ rulers, world }: { rulers: Rulers; world: WorldState }) {
+export function CultRulers({ rulers, world, onOpen }: { rulers: Rulers; world: WorldState; onOpen: () => void }) {
   return (
     <section className="rulers" aria-labelledby="rulers-h">
       <h3 id="rulers-h" className="section-title">
@@ -29,7 +29,7 @@ export function CultRulers({ rulers, world }: { rulers: Rulers; world: WorldStat
         })}
       </ul>
       <p className="rulers-note">
-        Social Chogs in a faction earn it presence here. <a href="/cult/">Open Chog Cult</a> to join a faction and vote.
+        Social Chogs in a faction earn it presence here. <button type="button" className="button button--quiet button--small" onClick={onOpen}>Open Chog Cult</button> to join a faction and vote.
       </p>
     </section>
   );

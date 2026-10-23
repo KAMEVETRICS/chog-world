@@ -102,7 +102,7 @@ export function SoulPage({ sleep = sleepFor }: { sleep?: (ms: number) => Promise
           Chog World
         </a>
         <div className="cw-nav-links">
-          <a href="/">Home</a><a href="/soul/" aria-current="page">Soul</a>{config?.city && <a href="/city/">City</a>}<a href="/cult/">Cult</a>
+          <a href="/">Home</a><a href="/soul/" aria-current="page">Soul</a>{config?.city && <a href="/city/">City</a>}
         </div>
         {config && <span className={`mode mode-${config.mode}`}>{config.label}</span>}
       </nav>
@@ -185,7 +185,7 @@ function ChogDetail({ chog, holdings, csrf, onFinished, onSessionLost, sleep }: 
           <PersonaCard agentKey={chog.agentKey!} />
           <p className="soul-links">
             {chog.inCity ? <a href={`/city/?chog=${chog.tokenId}`}>See {chog.name} in City →</a> : <MoveIn chog={chog} csrf={csrf} onFinished={onFinished} />}
-            <a href="/cult/">Choose its faction in Chog Cult →</a>
+            <a href="/city/?tab=cult">Choose its faction in Chog City →</a>
           </p>
           <SoulPanel agentKey={chog.agentKey!} name={chog.name} csrf={csrf} onSessionLost={onSessionLost} />
         </>

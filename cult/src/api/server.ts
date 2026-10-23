@@ -160,8 +160,11 @@ export async function buildServer(options: ServerOptions): Promise<FastifyInstan
     });
   }
   if (options.webRoot) {
-    // Landing page at / and Cult at /cult/: one multi-page build.
+    // Landing and Soul share a build; Cult now lives inside City's interface.
     await app.register(fastifyStatic, { root: options.webRoot, prefix: "/", index: "index.html" });
+  }
+  for (const path of ["/cult", "/cult/", "/cult/index.html"]) {
+    app.get(path, async (_request, reply) => reply.redirect("/city/?tab=cult", 301));
   }
   if (options.cityWebRoot) {
     await app.register(fastifyStatic, { root: options.cityWebRoot, prefix: "/city/", index: "index.html", decorateReply: false });

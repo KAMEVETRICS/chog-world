@@ -76,6 +76,15 @@ async function readFrames(url: string, done: (frames: Frame[]) => boolean, heade
 const ids = (frames: Frame[]) => frames.filter((frame) => frame.id).map((frame) => Number(frame.id));
 
 describeDb("public API", () => {
+  it("redirects legacy Cult pages into the City panel", async () => {
+    const { app } = await setup();
+    for (const url of ["/cult", "/cult/", "/cult/index.html"]) {
+      const response = await app.inject({ method: "GET", url });
+      expect(response.statusCode).toBe(301);
+      expect(response.headers.location).toBe("/city/?tab=cult");
+    }
+  });
+
   it("reports health and a consistent snapshot, places and factions", async () => {
     const s = await setup();
     await s.cult.setMembership(FIXTURE_HOLDERS.alice, key("Regent"), { faction: "crown" });

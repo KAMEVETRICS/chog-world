@@ -5,6 +5,7 @@ import { FIXTURE_ACTORS, type FixtureActorId } from '../fixtures/residents';
 import type { FixtureCityClient } from '../fixtures/fixture-client';
 import { AccountBar } from './account/AccountBar';
 import { CultRulers } from './cult/CultRulers';
+import { CultPanel } from './cult/CultPanel';
 import { useCultRulers } from './cult/rulers';
 import { ResidentSoul } from './soul/SoulPanel';
 import { useCity } from './api/city-client';
@@ -21,10 +22,11 @@ import './app.css';
 
 const Scene3D = lazy(() => import('./world3d/Scene3D'));
 
-type Tab = 'resident' | 'town' | 'roster' | 'log';
+type Tab = 'resident' | 'town' | 'cult' | 'roster' | 'log';
 const TABS: { id: Tab; label: string }[] = [
   { id: 'resident', label: 'Resident' },
   { id: 'town', label: 'Town' },
+  { id: 'cult', label: 'Cult' },
   { id: 'roster', label: 'Roster' },
   { id: 'log', label: 'Village log' },
 ];
@@ -53,7 +55,7 @@ function useMediaQuery(query: string): boolean {
 function readUrl(): { chog: string | null; tab: Tab } {
   const params = new URLSearchParams(window.location.search);
   const tab = params.get('tab');
-  return { chog: params.get('chog'), tab: tab === 'roster' || tab === 'log' || tab === 'town' ? tab : 'resident' };
+  return { chog: params.get('chog'), tab: tab === 'roster' || tab === 'log' || tab === 'town' || tab === 'cult' ? tab : 'resident' };
 }
 
 function writeUrl(chog: string | null, tab: Tab) {
@@ -119,7 +121,8 @@ export function App(props: AppProps) {
   useWears(); // re-render when the fixture village is re-dressed
   const initial = useMemo(readUrl, []);
   const [selectedToken, setSelectedToken] = useState<string | null>(initial.chog);
-  const [tab, setTab] = useState<Tab>(initial.tab);
+  const [tab, setTab] = useState<Tab>(initial.tab === 'cult' && !props.server ? 'town' : initial.tab);
+  const tabs = props.server ? TABS : TABS.filter(entry => entry.id !== 'cult');
   const [actor, setActorState] = useState<FixtureActorId | null>(fixture?.currentActor ?? null);
   // Server mode: the signed-in wallet. Signing in or out changes which residents are "mine".
   const [me, setMe] = useState<string | null>(null);
@@ -131,7 +134,7 @@ export function App(props: AppProps) {
   const [focusNonce, setFocusNonce] = useState(0);
   const narrow = useMediaQuery('(max-width: 760px)');
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const [panelOpen, setPanelOpen] = useState(() => !(typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches));
+  const [panelOpen, setPanelOpen] = useState(() => initial.tab === 'cult' || !(typeof window.matchMedia === 'function' && window.matchMedia('(max-width: 760px)').matches));
   const webgl = useMemo(supportsWebGL, []);
 
   const world = snapshot?.world;
@@ -364,7 +367,7 @@ export function App(props: AppProps) {
       <aside className={`hud panel hud-card${panelOpen ? '' : ' is-collapsed'}`} aria-label="Village journal">
         <div className="panel-bar">
           <div className="tabs" role="tablist" aria-label="Panels">
-            {TABS.map((t) => (
+            {tabs.map((t) => (
               <button
                 key={t.id}
                 type="button"
@@ -380,8 +383,8 @@ export function App(props: AppProps) {
                 }}
                 onKeyDown={(e) => {
                   if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-                  const i = TABS.findIndex((x) => x.id === tab);
-                  const next = TABS[(i + (e.key === 'ArrowRight' ? 1 : TABS.length - 1)) % TABS.length]!;
+                  const i = tabs.findIndex((x) => x.id === tab);
+                  const next = tabs[(i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length]!;
                   setTab(next.id);
                   document.getElementById(`tab-${next.id}`)?.focus();
                 }}
@@ -440,9 +443,10 @@ export function App(props: AppProps) {
               fixtureTools={fixture ? <TownFixtureTools client={fixture} /> : undefined}
             />
           ) : null}
+          {tab === 'cult' && props.server ? <CultPanel address={me} onSessionLost={signedOut} /> : null}
           {tab === 'roster' ? (
             <>
-              {rulers ? <CultRulers rulers={rulers} world={world} /> : null}
+              {rulers ? <CultRulers rulers={rulers} world={world} onOpen={() => setTab('cult')} /> : null}
               <PlaceList world={world} selectedKey={selected?.key ?? null} onSelect={select} mine={mineKeys} />
             </>
           ) : null}

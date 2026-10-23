@@ -6,8 +6,9 @@ import { setupCommand } from './setup.js';
 
 const HELP = `Local Chog CLI — Node 24+
 
-  chog login [--no-open]                 Prove wallet control locally (no transaction)
-  chog import <token-id>                 Import your awakened Chog from Monad
+  chog login [--no-open]                 Connect wallet, discover and choose your Chog
+  chog import                           Open the same wallet picker (no ID needed)
+  chog import <token-id>                 Advanced: select an explicitly named token
        [--metadata-file <file.json>]     Explicit trait fallback; provenance is labeled
   chog context [--offline]               Persona; live mode includes verified local memory
        [--out <new-file.json>]           Export public offline persona only, never memories
@@ -36,7 +37,8 @@ function openBrowser(url) {
 }
 export async function run(argv) {
   const { values: flags, positionals: args } = parseArgs({ args: argv, allowPositionals: true, strict: true, options: { help: { type: 'boolean', short: 'h' }, 'no-open': { type: 'boolean' }, offline: { type: 'boolean' }, confirm: { type: 'boolean' }, out: { type: 'string' }, 'metadata-file': { type: 'string' } } });
-  const command = args[0];
+  let command = args[0];
+  if (command === 'import' && !args[1]) command = 'login';
   if (!command || flags.help) { process.stdout.write(HELP); return; }
   if (command === 'setup') { process.stdout.write(setupCommand(args[1]) + '\n'); process.stderr.write('Run this command yourself to register Chog. No client configuration has been changed.\n'); return; }
   const allowed = new Set(['login', 'import', 'context', 'whoami', 'skills', 'memory', 'report', 'mcp', 'logout']);
@@ -52,7 +54,11 @@ export async function run(argv) {
   try {
     if (command === 'login') {
       const { startLogin } = await import('./login.js');
-      const flow = await startLogin({ save: login => store.saveLogin(login) });
+      const flow = await startLogin({
+        save: login => store.saveLogin(login),
+        discover: async (address, signal) => { process.stderr.write('Finding your Chogs on Monad…\n'); const chogs = await core.chain.owned(address, signal); if (!chogs.some(chog => chog.awakened)) store.saveSelection(null); return chogs; },
+        select: async (tokenId, signal) => { const card = await core.chooseToken(tokenId, signal); return { tokenId: card.identity.tokenId, name: card.persona.name }; }
+      });
       process.stderr.write(`Local wallet login: ${flow.url}\n`);
       if (!flags['no-open']) openBrowser(flow.url);
       const cancel = () => flow.close(); process.once('SIGINT', cancel);

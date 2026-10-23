@@ -78,6 +78,15 @@ test('renewing the same wallet proof retains memory after fresh verification', a
   store.saveLogin({ address: holder.address.toLowerCase(), expiresAt: Date.now() + 3600000 });
   assert.equal((await core.memories())[0].text, 'Keep this preference');
 });
+test('the wallet picker preserves the selected Chog memory when ownership is unchanged', async t => {
+  const { core, store } = fixture(t);
+  await core.importToken('1');
+  await core.addMemory('Keep this after choosing the same Chog');
+  const generation = store.selection().generation;
+  await core.chooseToken('1');
+  assert.equal(store.selection().generation, generation);
+  assert.equal((await core.memories())[0].text, 'Keep this after choosing the same Chog');
+});
 test('RPC allowlist never signs or submits transactions and rejects wrong chain', async () => {
   const chain = new Chain({ rpcUrl: 'https://rpc.example', fetchImpl: async () => new Response(JSON.stringify({ jsonrpc: '2.0', id: 1, result: '0x1' })) });
   await assert.rejects(chain.request('eth_sendRawTransaction', []), /read-only/);

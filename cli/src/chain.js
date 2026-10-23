@@ -1,5 +1,6 @@
 import { Interface, id, keccak256, zeroPadValue, toBeHex, getAddress, formatUnits } from 'ethers';
 import { networkUrl, readJson } from './network.js';
+import { galleryChog } from './gallery.js';
 
 export const NFT = '0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763';
 export const ADAPTER = '0x4a8d56dcadb3bd4f8d9776e9e6f6211b845c6b02';
@@ -7,8 +8,10 @@ export const REGISTRY = '0x8004a169fb4a3325136eb29fa0ceb6d2e539a432';
 export const ADAPTER_HASH = '0x5bd361efef40352c1299780dbe2b23176fcfe1f3f40c5c8d87bc1e70517ebf16';
 export const CHOG = '0x350035555e10d9afaf1566aaebfced5ba6c27777';
 export const TRANSFER = id('Transfer(address,address,uint256)');
-const erc721 = new Interface(['function ownerOf(uint256) view returns(address)', 'function tokenURI(uint256) view returns(string)']);
-const adapter = new Interface(['function agentOf(uint256) view returns(uint256)', 'function bindingOf(uint256) view returns(uint8,address,uint256)', 'function collection() view returns(address)', 'function identityRegistry() view returns(address)']);
+const erc721 = new Interface(['function balanceOf(address) view returns(uint256)', 'function ownerOf(uint256) view returns(address)', 'function tokenURI(uint256) view returns(string)']);
+const adapter = new Interface(['function agentOf(uint256) view returns(uint256)', 'function bindingOf(uint256) view returns(uint8,address,uint256)', 'function collection() view returns(address)', 'function identityRegistry() view returns(address)', 'error NotAwakened(uint256)']);
+const multicall = new Interface(['function aggregate3((address target,bool allowFailure,bytes callData)[] calls) payable returns((bool success,bytes returnData)[] returnData)']);
+const MULTICALL = '0xca11bde05977b3631167028862be2a173976ca11';
 const erc20 = new Interface(['function balanceOf(address) view returns(uint256)', 'function totalSupply() view returns(uint256)', 'function decimals() view returns(uint8)']);
 const METHODS = new Set(['eth_chainId', 'eth_getBlockByNumber', 'eth_getCode', 'eth_call', 'eth_getLogs', 'eth_getTransactionByHash', 'eth_getTransactionReceipt']);
 const HEX = /^0x[0-9a-fA-F]+$/;
@@ -43,6 +46,39 @@ export class Chain {
   async call(to, contract, method, args, at, signal) {
     const raw = await this.request('eth_call', [{ to, data: contract.encodeFunctionData(method, args), gas: '0x30d40' }, { blockHash: at.hash, requireCanonical: true }], signal);
     try { return contract.decodeFunctionResult(method, raw); } catch { throw Error(`Invalid contract result for ${method}.`); }
+  }
+  async owned(address, signal) {
+    address = getAddress(address).toLowerCase();
+    const at = await this.finalized(signal);
+    const balance = Number((await this.call(NFT, erc721, 'balanceOf', [address], at, signal))[0]);
+    if (!Number.isInteger(balance) || balance < 0 || balance > 1969) throw Error('Invalid Chog collection balance.');
+    if (!balance) return [];
+    const batches = async calls => {
+      const results = new Array(Math.ceil(calls.length / 100));
+      let next = 0;
+      const worker = async () => {
+        for (let index = next++; index < results.length; index = next++) {
+          const batch = calls.slice(index * 100, index * 100 + 100);
+          const raw = await this.request('eth_call', [{ to: MULTICALL, data: multicall.encodeFunctionData('aggregate3', [batch]), gas: '0x989680' }, { blockHash: at.hash, requireCanonical: true }], signal);
+          const decoded = multicall.decodeFunctionResult('aggregate3', raw)[0];
+          if (decoded.length !== batch.length) throw Error('Incomplete wallet discovery. Try another RPC.');
+          results[index] = Array.from(decoded);
+        }
+      };
+      await Promise.all([worker(), worker()]);
+      return results.flat();
+    };
+    const owners = await batches(Array.from({ length: 1969 }, (_, index) => ({ target: NFT, allowFailure: true, callData: erc721.encodeFunctionData('ownerOf', [index + 1]) })));
+    const ids = owners.flatMap((answer, index) => answer.success && erc721.decodeFunctionResult('ownerOf', answer.returnData)[0].toLowerCase() === address ? [String(index + 1)] : []);
+    if (ids.length !== balance) throw Error('Incomplete wallet discovery. No selection was made; try another RPC.');
+    const agents = await batches(ids.map(tokenId => ({ target: ADAPTER, allowFailure: true, callData: adapter.encodeFunctionData('agentOf', [tokenId]) })));
+    return ids.map((tokenId, index) => {
+      const answer = agents[index];
+      if (answer.success) adapter.decodeFunctionResult('agentOf', answer.returnData);
+      else if (answer.returnData.toLowerCase() !== adapter.encodeErrorResult('NotAwakened', [tokenId]).toLowerCase()) throw Error('Cannot verify Chog awakening status. Try another RPC.');
+      const { metadata: _metadata, ...display } = galleryChog(tokenId);
+      return { ...display, awakened: answer.success };
+    });
   }
   async importToken(tokenId, signal) {
     tokenId = tokenNumber(tokenId);

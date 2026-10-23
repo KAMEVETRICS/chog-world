@@ -43,3 +43,28 @@ test('agent lookup failures explain the awakening prerequisite without claiming 
   const { chain } = chainWith({ methodError: true });
   await assert.rejects(chain.request('eth_call', [{ to: ADAPTER, data: '0x6cb75a1e' }]), /awakened/);
 });
+test('owned discovery reads the wallet automatically and checks the discovered count', async () => {
+  const collection = new Interface(['function balanceOf(address) view returns(uint256)', 'function ownerOf(uint256) view returns(address)']);
+  const aggregate = new Interface(['function aggregate3((address target,bool allowFailure,bytes callData)[] calls) payable returns((bool success,bytes returnData)[] returnData)']);
+  const agent = new Interface(['function agentOf(uint256) view returns(uint256)', 'error NotAwakened(uint256)']);
+  const { chain } = chainWith();
+  chain.request = async (method, params) => {
+    if (method === 'eth_chainId') return '0x8f';
+    if (method === 'eth_getBlockByNumber') return { number: '0x100', hash: hash(256) };
+    const call = params[0];
+    assert.equal(params[1].blockHash, hash(256));
+    if (call.data.startsWith(collection.getFunction('balanceOf').selector)) return collection.encodeFunctionResult('balanceOf', [2]);
+    const calls = aggregate.decodeFunctionData('aggregate3', call.data)[0];
+    return aggregate.encodeFunctionResult('aggregate3', [calls.map(item => {
+      if (item.target.toLowerCase() === NFT) {
+        const id = Number(collection.decodeFunctionData('ownerOf', item.callData)[0]);
+        return [true, collection.encodeFunctionResult('ownerOf', [id === 7 || id === 9 ? owner : '0x' + '22'.repeat(20)])];
+      }
+      const id = Number(agent.decodeFunctionData('agentOf', item.callData)[0]);
+      return id === 7 ? [true, agent.encodeFunctionResult('agentOf', [42])] : [false, agent.encodeErrorResult('NotAwakened', [id])];
+    })]);
+  };
+  const owned = await chain.owned(owner);
+  assert.deepEqual(owned.map(chog => [chog.tokenId, chog.awakened]), [['7', true], ['9', false]]);
+  assert.ok(owned.every(chog => chog.name && chog.image));
+});

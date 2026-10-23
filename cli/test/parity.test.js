@@ -4,6 +4,11 @@ import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
 import { personaFor } from '../src/persona.js';
 const require = createRequire(import.meta.url);
+test('bundled gallery exactly matches City artwork and collection traits', () => {
+  const local = JSON.parse(readFileSync(new URL('../src/genesis-gallery.json', import.meta.url), 'utf8'));
+  const city = JSON.parse(readFileSync(new URL('../../city/src/fixtures/chog-genesis.json', import.meta.url), 'utf8'));
+  assert.deepEqual(local, city);
+});
 test('local persona logic matches the current Soul implementation across all trait rules', async () => {
   const ts = require('typescript');
   const hashSource = readFileSync(new URL('../../cult/src/engine/hash.ts', import.meta.url), 'utf8');

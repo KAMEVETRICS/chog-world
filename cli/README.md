@@ -12,15 +12,16 @@ PowerShell, from the repository root:
 npm.cmd --prefix cli ci
 node cli/bin/chog.js --help
 node cli/bin/chog.js login
-node cli/bin/chog.js import 42
 node cli/bin/chog.js context
 ```
 
-Replace `42` with your token ID. Login opens a temporary `127.0.0.1` page in your browser. Choose your wallet and sign the local login message. The signature is verified locally and is never saved; no transaction, wallet key or server credential is involved. Wallet proof lasts one hour. To open the page yourself, run `login --no-open` and use the URL printed in the terminal.
+The flow matches Normies: **connect wallet → sign once → automatically discover owned Chogs → select your Chog**. If there is one awakened Chog, it is selected automatically. With several, the same browser page shows a picker with names and artwork. Unawakened Chogs are shown but disabled. **Users never need to know or enter a token ID.** `import` without an ID opens the same flow.
 
-Import verifies the holder, adapter bytecode, collection/registry and the NFT's agent binding at a finalized Monad block. It reads traits from the collection's `tokenURI` (HTTPS, IPFS or JSON data URI), and uses the same deterministic character rules as Soul. The generated name is `Chog #<id>`, matching the live chain directory; server-only nicknames/private instructions are not imported. External metadata and RPC providers remain external dependencies. Import fails clearly if a token is not awakened or a provider is unavailable.
+Login opens a temporary `127.0.0.1` page in your browser. The signature is verified locally and is never saved; no transaction, wallet key or server credential is involved. Wallet proof lasts one hour; the browser flow times out after five minutes. To open the page yourself, run `login --no-open` and use the URL printed in the terminal. Discovery uses direct finalized-block Multicall3 reads and checks its result against the wallet's NFT balance; it calls no Chog World server.
 
-If the metadata provider is unavailable, explicitly supply a small NFT metadata JSON file containing `attributes`:
+Selection verifies the holder, adapter bytecode, collection/registry and the NFT's agent binding at a finalized Monad block before loading the persona. The normal picker uses the bundled public collection trait/artwork mapping already used by City, labeled `bundled-collection-metadata`; it uses the same deterministic character rules as Soul. The generated name is `Chog #<id>`, matching the live chain directory; server-only nicknames/private instructions are not imported. The selected Chog's ownership is rechecked even if it appeared in discovery moments earlier. Renewing login and selecting the same Chog preserves its memory generation when verified ownership history is unchanged.
+
+For advanced use only, a token can still be selected explicitly with `import <token-id>`. This path reads the collection's `tokenURI` metadata directly. If that provider is unavailable, explicitly supply a small NFT metadata JSON file containing `attributes`:
 
 ```powershell
 node cli/bin/chog.js import 42 --metadata-file .\my-chog-metadata.json

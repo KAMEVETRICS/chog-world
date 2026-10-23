@@ -1,0 +1,41 @@
+node_modules/
+.cache/
+cache/
+coverage/
+dist/
+playwright-report/
+test-results/
+.claude/
+
+# Local secrets and runtime data; keep only documented example settings.
+.env
+.env.*
+!.env.example
+*.env
+*.env.*
+!*.env.example
+*.log
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+*.pem
+*.key
+
+# Local bundles and OS/editor files.
+*.zip
+*.tar.gz
+.DS_Store
+Thumbs.db
+*.tsbuildinfo
+
+# Rebuild compiler output locally; retain reviewed public-chain evidence.
+artifacts/*
+!artifacts/monad-testnet-deployment-verification.json
+!artifacts/monad-testnet-ownership-proof-verification.json
+
+deployments/*.json
+!deployments/example.json
+!deployments/1792445134988-monad-testnet.json
+!deployments/1792447471099-monad-testnet-ownership-proof.json
+!deployments/1792488171720-monad-mainnet.json

@@ -1,0 +1,19 @@
+# Docker build context is the repository root; only cult/, city/ and the mainnet manifest are copied.
+# Never send secrets, keys, dependencies or local build output into the image build.
+**/node_modules
+**/dist
+**/.cache
+**/coverage
+**/.env
+**/.env.*
+!**/.env.example
+.claude
+artifacts
+cache
+contracts
+docs
+scripts
+test
+deploy/.env
+*.zip
+*.tar.gz

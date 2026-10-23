@@ -1,0 +1,15 @@
+{
+  "environment": "monad-mainnet",
+  "chainId": 143,
+  "registry": "0x8004a169fb4a3325136eb29fa0ceb6d2e539a432",
+  "adapter": "0x4a8d56dcadb3bd4f8d9776e9e6f6211b845c6b02",
+  "collection": "0xc96d31f8626c6d03fae5dcd3d61e3fb9f4a73763",
+  "activationBlock": "115003560",
+  "activationBlockHash": "0xa5205acf90e0430e85e874d2291658fe1603a8335291e894b94d9cc79704cf37",
+  "receipts": {
+    "adapterDeployment": "0xbd185b60f835b127f8c7c4e43f8bd96db7f8179f583dc47393f511d5ade022b7"
+  },
+  "runtimeCodeHashes": {
+    "adapter": "0x5bd361efef40352c1299780dbe2b23176fcfe1f3f40c5c8d87bc1e70517ebf16"
+  }
+}

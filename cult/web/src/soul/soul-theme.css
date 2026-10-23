@@ -1,0 +1,126 @@
+/* Chog Soul in the Chog World look: black, purple, cream and a little baby pink. Scoped to the Soul page body,
+   so Chog Cult (which shares styles.css) keeps its own look. */
+body.soul-body {
+  --surface: var(--cw-night);
+  --panel: var(--cw-panel);
+  --ink: var(--cw-text);
+  --muted: var(--cw-muted);
+  --line: var(--cw-line);
+  --action: var(--cw-purple);
+  --caution: #f2c67a;
+  --error: #ff9a9a;
+  --ok: #9be7b4;
+  color-scheme: dark;
+  min-height: 100vh;
+  font-size: 16px;
+}
+body.soul-body .app { max-width: 1180px; padding: 0 clamp(16px, 4vw, 40px) 64px; }
+body.soul-body .mode { margin-left: 8px; border-color: var(--cw-line); background: var(--cw-panel); color: var(--cw-muted); }
+body.soul-body .mode-fixture { border-color: var(--cw-pink); color: var(--cw-pink); }
+
+/* Hero */
+.soul-hero { position: relative; padding: clamp(40px, 7vw, 80px) 0 10px; }
+.soul-hero::before {
+  content: "";
+  position: absolute;
+  inset: 0 30% auto 0;
+  height: 220px;
+  background: radial-gradient(ellipse at 20% 40%, rgba(138, 92, 246, 0.3), transparent 70%);
+  filter: blur(30px);
+  z-index: -1;
+}
+.soul-hero h1 { font-size: clamp(2.4rem, 7vw, 4.6rem); margin: 12px 0 0; text-shadow: 0 0 36px rgba(138, 92, 246, 0.45); }
+body.soul-body .soul-page .lede { max-width: 68ch; margin: 14px 0 32px; color: var(--cw-muted); }
+
+/* Type */
+body.soul-body h2, body.soul-body h3 { font-family: var(--cw-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.01em; color: var(--cw-cream); }
+body.soul-body h2 { font-size: 1.1rem; }
+body.soul-body h3 { font-size: 0.95rem; }
+body.soul-body h4, body.soul-body h5 { font: 700 0.78rem/1.2 var(--cw-body); letter-spacing: 0.12em; text-transform: uppercase; color: var(--cw-pink); margin: 0 0 6px; }
+body.soul-body a { color: var(--cw-cream); }
+body.soul-body code { color: var(--cw-pink); }
+
+/* Buttons: angled, purple glow; quiet link buttons stay links. */
+body.soul-body button:not(.link):not(.chog-card) {
+  min-height: 44px;
+  padding: 10px 20px;
+  border: 0;
+  border-radius: 0;
+  background: linear-gradient(135deg, #a07bff, var(--cw-purple) 45%, var(--cw-purple-deep));
+  color: #fff;
+  font: 700 0.82rem/1 var(--cw-body);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px));
+  filter: drop-shadow(0 0 14px var(--cw-purple-glow));
+  transition: transform 0.2s var(--cw-ease), filter 0.2s var(--cw-ease);
+}
+body.soul-body button:not(.link):not(.chog-card):hover:not(:disabled) { transform: translateY(-2px); filter: drop-shadow(0 0 22px var(--cw-purple-glow)); }
+body.soul-body button:disabled { opacity: 0.45; cursor: not-allowed; filter: none; }
+body.soul-body button.link { background: none; border: 0; padding: 0; min-height: 0; color: var(--cw-pink); text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+body.soul-body :focus-visible { outline: 2px solid var(--cw-pink); outline-offset: 3px; }
+
+/* Inputs */
+body.soul-body input[type="text"], body.soul-body input[type="number"], body.soul-body textarea, body.soul-body select {
+  min-height: 42px;
+  padding: 8px 12px;
+  border: 1px solid var(--cw-line);
+  border-radius: 0;
+  background: var(--cw-black);
+  color: var(--cw-text);
+  font: inherit;
+}
+body.soul-body textarea { width: 100%; resize: vertical; }
+body.soul-body input:focus, body.soul-body textarea:focus, body.soul-body select:focus { border-color: var(--cw-purple); outline: none; box-shadow: 0 0 0 3px rgba(138, 92, 246, 0.25); }
+body.soul-body input[type="checkbox"], body.soul-body input[type="radio"] { accent-color: var(--cw-purple); width: 18px; height: 18px; }
+
+/* Cards and panels */
+.soul-signin, .chog-detail, body.soul-body .soul-layout > section {
+  padding: clamp(18px, 3vw, 28px);
+  background: linear-gradient(180deg, var(--cw-panel-2), var(--cw-panel));
+  border: 1px solid var(--cw-line);
+}
+.soul-signin { max-width: 680px; box-shadow: 0 30px 80px -40px var(--cw-purple-glow); }
+body.soul-body .soul-layout { gap: 22px; }
+body.soul-body .chog-card {
+  min-height: 0;
+  padding: 12px;
+  background: var(--cw-black);
+  color: var(--cw-text);
+  border: 1px solid var(--cw-line);
+  border-radius: 0;
+  cursor: pointer;
+  transition: transform 0.2s var(--cw-ease), border-color 0.2s;
+}
+body.soul-body .chog-card:hover { transform: translateY(-3px); border-color: var(--cw-purple); }
+body.soul-body .chog-card[aria-pressed="true"] { border-color: var(--cw-pink); box-shadow: 0 0 0 1px var(--cw-pink) inset, 0 0 24px -6px rgba(247, 182, 210, 0.5); }
+body.soul-body .chog-card img, body.soul-body .chog-art { border-radius: 0; background: var(--cw-panel); }
+body.soul-body .chog-name { font-family: var(--cw-display); font-size: 0.8rem; text-transform: uppercase; color: var(--cw-cream); }
+body.soul-body .chog-head img { border-radius: 0; box-shadow: 0 0 0 2px var(--cw-purple), 0 0 30px -6px var(--cw-purple-glow); }
+
+/* Status chips in Chog colours */
+body.soul-body .chip { border-radius: 0; padding: 2px 8px; font-weight: 600; letter-spacing: 0.04em; }
+body.soul-body .chip-asleep { border-color: var(--cw-cream-dim); color: var(--cw-cream-dim); }
+body.soul-body .chip-awake { border-color: var(--cw-purple); color: #c4adff; }
+body.soul-body .chip-joined { border-color: var(--cw-pink); color: var(--cw-pink); }
+
+/* Soul panel: credits, consent, chat, bot */
+body.soul-body .soul { border-top-color: var(--cw-line); gap: 18px; }
+body.soul-body .credits { padding: 14px 16px; background: rgba(251, 243, 205, 0.06); border-left: 3px solid var(--cw-cream); }
+body.soul-body .credits strong { font-family: var(--cw-display); color: var(--cw-cream); }
+body.soul-body .top-up { border-radius: 0; border-color: var(--cw-line); background: var(--cw-black); }
+body.soul-body .chat-log { padding: 12px; background: var(--cw-black); border: 1px solid var(--cw-line); max-height: 320px; }
+body.soul-body .bubble { border-radius: 0; padding: 8px 12px; }
+body.soul-body .bubble.holder { background: var(--cw-purple); color: #fff; clip-path: polygon(0 0, 100% 0, 100% 100%, 8px 100%, 0 calc(100% - 8px)); }
+body.soul-body .bubble.chog { background: var(--cw-cream); color: var(--cw-black); border: 0; clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%); }
+body.soul-body .bot { display: grid; gap: 12px; padding-top: 6px; border-top: 1px dashed var(--cw-line); }
+body.soul-body .bot-profiles { display: grid; gap: 8px; margin: 0; padding: 12px; border: 1px solid var(--cw-line); }
+body.soul-body .bot-profiles legend { padding: 0 6px; color: var(--cw-pink); font-weight: 700; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; }
+body.soul-body .bot-try { display: grid; gap: 8px; padding: 14px; background: rgba(138, 92, 246, 0.08); border: 1px solid rgba(138, 92, 246, 0.35); }
+body.soul-body .bot-try label { display: grid; gap: 4px; }
+body.soul-body .bot-log summary { cursor: pointer; color: var(--cw-cream); font-weight: 600; }
+body.soul-body .bot-log ol { display: grid; gap: 10px; padding-left: 18px; }
+body.soul-body .soul-links a { color: var(--cw-pink); }
+body.soul-body .persona { color: var(--cw-text); }
+body.soul-body .ok { color: var(--ok); }
+body.soul-body .error { color: var(--error); }

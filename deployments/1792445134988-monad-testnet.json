@@ -1,0 +1,20 @@
+{
+  "chainId": 10143,
+  "registry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+  "deployer": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+  "officialChogCollection": false,
+  "deployments": {
+    "ChogAdapter": {
+      "address": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869",
+      "transactionHash": "0xe2a6902c0698d157b48033cfa645666fc02ebe64a5b5743c0ccb2afb52459683",
+      "nonce": 2,
+      "status": "confirmed",
+      "blockNumber": 72493203,
+      "constructorArgs": [
+        "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+        "0x8004A818BFB912233c491871b3d84c89A494BD9e"
+      ]
+    }
+  },
+  "collection": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE"
+}

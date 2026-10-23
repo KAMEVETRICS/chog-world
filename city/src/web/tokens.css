@@ -1,0 +1,133 @@
+@import '@fontsource-variable/fraunces/full.css';
+@import '@fontsource-variable/instrument-sans/index.css';
+
+:root {
+  /* Paper and ink */
+  --paper: #f4ede0;
+  --paper-raised: #fbf7ef;
+  --paper-sunk: #ebe2d1;
+  --ink: #2a211b;
+  --ink-2: #5b4e43;
+  --ink-3: #8a7b6c;
+  --rule: #ddd0ba;
+  --rule-strong: #c9b89c;
+
+  /* Land */
+  --meadow: #c3cf98;
+  --meadow-deep: #a9ba7c;
+  --meadow-shade: #95a86b;
+  --path: #e6d4ab;
+  --path-edge: #cfb886;
+  --water: #a7cbcc;
+  --water-deep: #7fadb1;
+
+  /* Chog and materials */
+  --chog: #7b5ce0;
+  --chog-deep: #4b36a3;
+  --chog-soft: #e6defb;
+  --wood: #a5683a;
+  --wood-soft: #f0dcc7;
+  --stone: #7f8c95;
+  --stone-soft: #dde2e4;
+  --food: #c39a1f;
+  --food-soft: #f3e6b8;
+  --roof: #c4573e;
+
+  /* Status (always paired with text/icon, never color alone) */
+  --ok: #3f7d4e;
+  --warn: #b26b12;
+  --alert: #b23a2b;
+  --muted: #8a7b6c;
+
+  /* Type */
+  --font-display: 'Fraunces Variable', 'Iowan Old Style', Georgia, serif;
+  --font-ui: 'Instrument Sans Variable', ui-sans-serif, system-ui, sans-serif;
+
+  /* Space, radius, motion */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --radius-s: 6px;
+  --radius-m: 10px;
+  --radius-l: 16px;
+  --shadow-card: 0 1px 0 rgba(42, 33, 27, 0.06), 0 8px 24px -12px rgba(42, 33, 27, 0.18);
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --t-fast: 120ms;
+  --t-base: 180ms;
+  --t-slow: 240ms;
+  --t-walk: 900ms;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 15px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  /* Faint paper grain so large surfaces never read as flat UI fill. */
+  background-image: radial-gradient(rgba(90, 70, 40, 0.035) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+button,
+input,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--chog);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --t-fast: 0ms;
+    --t-base: 0ms;
+    --t-slow: 0ms;
+    --t-walk: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

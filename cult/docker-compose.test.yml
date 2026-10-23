@@ -1,0 +1,16 @@
+# Local test database for Chog Cult only. Bound to 127.0.0.1; the password is a local test value.
+services:
+  postgres:
+    image: postgres:17.6
+    container_name: chog-cult-test-pg
+    environment:
+      POSTGRES_USER: cult
+      POSTGRES_PASSWORD: cult-local-test
+      POSTGRES_DB: cult_test
+    ports:
+      - "127.0.0.1:55432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cult -d cult_test"]
+      interval: 2s
+      timeout: 3s
+      retries: 30

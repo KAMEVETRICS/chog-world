@@ -1,0 +1,30 @@
+{
+  "readOnly": true,
+  "checkedAt": "2026-10-19T21:26:53.854Z",
+  "chainId": 10143,
+  "checkedBlock": 72493456,
+  "receipt": {
+    "transactionHash": "0xe2a6902c0698d157b48033cfa645666fc02ebe64a5b5743c0ccb2afb52459683",
+    "status": 1,
+    "blockNumber": 72493203,
+    "contractAddress": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869"
+  },
+  "adapter": {
+    "address": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869",
+    "codeBytes": 3489,
+    "runtimeCodeHash": "0xca8e1563f9c75bd5379554e8e7fa115b1b353a6a230c1e9c964472988dfcf63a",
+    "collection": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+    "identityRegistry": "0x8004A818BFB912233c491871b3d84c89A494BD9e"
+  },
+  "collection": {
+    "address": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+    "name": "Chog Awakening Test NFT",
+    "erc721": true,
+    "codeBytes": 3325,
+    "runtimeCodeHash": "0x7c6a8639e7a909d1de849b8c83cda88aa017a03af43bea1dd930e27ecaaf9a80"
+  },
+  "officialChogCollection": false,
+  "sourceRecord": "deployments/1792445134988-monad-testnet.json",
+  "scope": "Deployment receipt, deployed code and immutable configuration verified; awakening and NFT-transfer behavior not exercised by this check.",
+  "rpcHost": "testnet-rpc.monad.xyz"
+}

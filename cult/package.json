@@ -1,0 +1,47 @@
+{
+  "name": "chog-cult",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit && tsc --noEmit -p web",
+    "test": "vitest run",
+    "check": "tsc --noEmit && vitest run",
+    "demo": "tsx src/cli/demo.ts",
+    "db:up": "docker compose -f docker-compose.test.yml up -d --wait",
+    "db:down": "docker compose -f docker-compose.test.yml down",
+    "test:db": "node scripts/test-db.mjs",
+    "serve:fixture": "tsc --noEmit && vite build --config web/vite.config.ts && npm --prefix ../city run build:server && tsx src/cli/serveFixture.ts",
+    "serve:live": "tsc --noEmit && vite build --config web/vite.config.ts && npm --prefix ../city run build:server && tsx src/cli/serveLive.ts",
+    "manifest": "tsx src/cli/makeManifest.ts",
+    "record:rpc": "tsx scripts/record-rpc.mjs",
+    "web:build": "vite build --config web/vite.config.ts",
+    "web:dev": "vite --config web/vite.config.ts",
+    "demo:acceptance": "tsx src/cli/acceptance.ts"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
+    "@types/pg": "^8.11.10",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "jsdom": "^30.1.2",
+    "typescript": "5.6.3",
+    "vite": "^8.3.4",
+    "vitest": "^4.1.12"
+  },
+  "dependencies": {
+    "@fastify/static": "^10.1.5",
+    "ethers": "^6.17.0",
+    "fastify": "^5.12.6",
+    "pg": "^8.13.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "tsx": "4.23.15"
+  }
+}

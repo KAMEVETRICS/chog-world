@@ -1,0 +1,77 @@
+# Production stack for one VPS: the app, PostgreSQL and, with COMPOSE_PROFILES=caddy, Caddy for HTTPS with automatic
+# certificates. On a server that already runs a reverse proxy, leave the profile out and point that proxy at
+# 127.0.0.1:APP_HOST_PORT (README: "A server that already has a web server").
+# Run from this folder: docker compose up -d --build. Settings come from ./.env (see production.env.example).
+name: chog-world
+
+services:
+  db:
+    image: postgres:17.6
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: chog
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in deploy/.env}
+      POSTGRES_DB: chog_world
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chog -d chog_world"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+    # Not published: only the app reaches it, on the internal network.
+    networks:
+      - internal
+
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file: .env
+    environment:
+      CULT_DATABASE_URL: postgres://chog:${POSTGRES_PASSWORD}@db:5432/chog_world
+      CULT_ORIGIN: https://${CULT_DOMAIN:?Set CULT_DOMAIN in deploy/.env}
+      # Only the proxy's address may tell the app who the visitor is (X-Forwarded-For), for per-visitor sign-in
+      # limits: our Caddy container by default; the bridge gateway when the host's own proxy connects through the port.
+      CULT_TRUSTED_PROXY: ${CULT_TRUSTED_PROXY:-172.28.0.10}
+    # Loopback only: reachable by a reverse proxy on this host, never from the internet.
+    ports:
+      - "127.0.0.1:${APP_HOST_PORT:-8790}:8787"
+    networks:
+      internal:
+        ipv4_address: 172.28.0.20
+
+  caddy:
+    image: caddy:2.10.2
+    profiles: ["caddy"]
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+      - "${HTTPS_PORT:-443}:443/udp"
+    environment:
+      CULT_DOMAIN: ${CULT_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      internal:
+        ipv4_address: 172.28.0.10
+
+networks:
+  internal:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

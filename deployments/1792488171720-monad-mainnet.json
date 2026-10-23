@@ -1,0 +1,52 @@
+{
+  "network": "monad-mainnet",
+  "chainId": 143,
+  "confirmation": "CHOG-73526CB6",
+  "preflight": {
+    "network": "Monad mainnet (143)",
+    "rpcHost": "rpc.monad.xyz",
+    "deployer": "0x51aff9a7D7B003c4B0c3AE68EA412FdB11ef099F",
+    "nonce": 0,
+    "collection": "0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763",
+    "identityRegistry": "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+    "registryImplementation": "0x7274e874CA62410a93Bd8bf61c69d8045E399c02",
+    "tokenbound": {
+      "registry": "0x000000006551c19487814612e58FE06813775758",
+      "implementation": "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+      "salt": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "gasLimit": "1247141",
+    "maxFeePerGas": "202000000000",
+    "maxCost": "0.251922482 MON",
+    "balance": "24.36655714340922809 MON",
+    "initCodeHash": "0xea7b8dd44ebbe8a6082857994a63b652fff0b210b02364f1c70590d965820c5d"
+  },
+  "deployments": {
+    "ChogAdapter": {
+      "address": "0x4A8d56DCAdB3bD4f8D9776E9e6F6211b845C6b02",
+      "transactionHash": "0xbd185b60f835b127f8c7c4e43f8bd96db7f8179f583dc47393f511d5ade022b7",
+      "nonce": 0,
+      "status": "confirmed",
+      "blockNumber": 115003560,
+      "constructorArgs": [
+        "0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763",
+        "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+        "0x000000006551c19487814612e58FE06813775758",
+        "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+        "0x0000000000000000000000000000000000000000000000000000000000000000"
+      ]
+    }
+  },
+  "verification": {
+    "address": "0x4A8d56DCAdB3bD4f8D9776E9e6F6211b845C6b02",
+    "runtimeCodeHash": "0x5bd361efef40352c1299780dbe2b23176fcfe1f3f40c5c8d87bc1e70517ebf16",
+    "runtimeMatches": true,
+    "immutables": [
+      "0xc96d31F8626c6D03Fae5dCD3d61e3FB9F4a73763",
+      "0x8004A169FB4a3325136EB29fA0ceB6D2e539a432",
+      "0x000000006551c19487814612e58FE06813775758",
+      "0x55266d75D1a14E4572138116aF39863Ed6596E7F",
+      "0x0000000000000000000000000000000000000000000000000000000000000000"
+    ]
+  }
+}

@@ -1,0 +1,10 @@
+# HTTPS for CULT_DOMAIN with an automatic Let's Encrypt certificate, in front of the app.
+{$CULT_DOMAIN} {
+	# Compress pages and code, but never the live event streams: they must reach browsers as they happen.
+	@compressible not path /api/city/events /api/cult/events
+	encode @compressible zstd gzip
+
+	reverse_proxy app:8787 {
+		flush_interval -1
+	}
+}

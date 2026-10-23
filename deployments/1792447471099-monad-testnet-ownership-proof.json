@@ -1,0 +1,86 @@
+{
+  "kind": "chog-awakening-ownership-proof",
+  "chainId": 10143,
+  "adapter": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869",
+  "collection": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+  "registry": "0x8004A818BFB912233c491871b3d84c89A494BD9e",
+  "officialChogCollection": false,
+  "owner": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+  "recipient": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+  "tokenId": "1792447321178",
+  "agentURI": "data:application/json;base64,eyJ0eXBlIjoiaHR0cHM6Ly9laXBzLmV0aGVyZXVtLm9yZy9FSVBTL2VpcC04MDA0I3JlZ2lzdHJhdGlvbi12MSIsIm5hbWUiOiJDaG9nIEF3YWtlbmluZyB0ZXN0bmV0IHByb29mICMxNzkyNDQ3MzIxMTc4IiwiZGVzY3JpcHRpb24iOiJUZXN0LW9ubHkgaWRlbnRpdHkgYm91bmQgdG8gYSBUZXN0Q2hvZyBmaXh0dXJlIE5GVCB0aHJvdWdoIENob2dBZGFwdGVyLiBOb3QgYW4gb2ZmaWNpYWwgQ2hvZy4ifQ==",
+  "rpcHost": "testnet-rpc.monad.xyz",
+  "startedAt": "2026-10-19T22:04:31.098Z",
+  "status": "passed",
+  "transactions": {
+    "mint": {
+      "to": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+      "transactionHash": "0x959e5bafdf63c3284c5277b6d65ddeee6ec9e6abd35ec57365f74a63c137d156",
+      "nonce": 3,
+      "status": "confirmed",
+      "blockNumber": 72500939
+    },
+    "awaken": {
+      "to": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869",
+      "transactionHash": "0x9d1912829bdedfec6063b901b0af8de84a1bb12a0fd4a0fde4f90248df93291e",
+      "nonce": 4,
+      "status": "confirmed",
+      "blockNumber": 72500951
+    },
+    "transfer": {
+      "to": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+      "transactionHash": "0x0760992e21028fe0fcf46c4b5bc87eb61237e2bc8025a1e08be55dcf473b7f79",
+      "nonce": 5,
+      "status": "confirmed",
+      "blockNumber": 72500966
+    }
+  },
+  "checks": {
+    "afterAwaken": {
+      "blockNumber": 72500951,
+      "agentId": "2374",
+      "binding": {
+        "standard": 0,
+        "collection": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+        "tokenId": "1792447321178"
+      },
+      "controller": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+      "identityOwner": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869",
+      "agentBinding": "0x095ffc29b9b7384763aac703a627bf8a2d6c7869",
+      "ownerSetAgentURI": {
+        "from": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+        "allowed": true
+      }
+    },
+    "afterTransfer": {
+      "blockNumber": 72500966,
+      "nftOwner": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+      "controller": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+      "identityOwner": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869",
+      "oldOwner": {
+        "setAgentURI": {
+          "from": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+          "allowed": false,
+          "error": "NotTokenOwner"
+        },
+        "setMetadata": {
+          "from": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+          "allowed": false,
+          "error": "NotTokenOwner"
+        }
+      },
+      "newOwner": {
+        "setAgentURI": {
+          "from": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+          "allowed": true
+        },
+        "setMetadata": {
+          "from": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+          "allowed": true
+        }
+      }
+    }
+  },
+  "agentId": "2374",
+  "finishedAt": "2026-10-19T22:04:43.538Z"
+}

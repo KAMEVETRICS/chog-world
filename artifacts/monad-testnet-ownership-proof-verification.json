@@ -1,0 +1,67 @@
+{
+  "readOnly": true,
+  "checkedAt": "2026-10-19T22:05:12.667Z",
+  "chainId": 10143,
+  "tokenId": "1792447321178",
+  "agentId": "2374",
+  "transactions": {
+    "mint": {
+      "transactionHash": "0x959e5bafdf63c3284c5277b6d65ddeee6ec9e6abd35ec57365f74a63c137d156",
+      "blockNumber": 72500939,
+      "status": 1,
+      "from": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+      "to": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+      "nonce": 3,
+      "call": "mint"
+    },
+    "awaken": {
+      "transactionHash": "0x9d1912829bdedfec6063b901b0af8de84a1bb12a0fd4a0fde4f90248df93291e",
+      "blockNumber": 72500951,
+      "status": 1,
+      "from": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+      "to": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869",
+      "nonce": 4,
+      "call": "awaken"
+    },
+    "transfer": {
+      "transactionHash": "0x0760992e21028fe0fcf46c4b5bc87eb61237e2bc8025a1e08be55dcf473b7f79",
+      "blockNumber": 72500966,
+      "status": 1,
+      "from": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+      "to": "0x9C716801D68b5bDADF7979D37A382a72fDBa1ABE",
+      "nonce": 5,
+      "call": "transferFrom"
+    }
+  },
+  "current": {
+    "blockNumber": 72501069,
+    "nftOwner": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+    "controller": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+    "identityOwner": "0x095FFc29B9b7384763aac703a627Bf8A2D6c7869",
+    "oldOwner": {
+      "setAgentURI": {
+        "from": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+        "allowed": false,
+        "error": "NotTokenOwner"
+      },
+      "setMetadata": {
+        "from": "0xd0361ECd9fbBa2078ee7936B13B9e32A02775945",
+        "allowed": false,
+        "error": "NotTokenOwner"
+      }
+    },
+    "newOwner": {
+      "setAgentURI": {
+        "from": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+        "allowed": true
+      },
+      "setMetadata": {
+        "from": "0xd6F29311Ac393c2de063400b3d817ab9ececBef5",
+        "allowed": true
+      }
+    }
+  },
+  "rpcHost": "testnet-rpc.monad.xyz",
+  "sourceRecord": "deployments/1792447471099-monad-testnet-ownership-proof.json",
+  "officialChogCollection": false
+}

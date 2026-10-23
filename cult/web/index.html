@@ -27,6 +27,7 @@
         <a href="/" aria-current="page">Home</a>
         <a href="/soul/">Soul</a>
         <a href="/city/">City</a>
+        <a href="#chog-bot">Chog Bot</a>
         <a href="#faq">FAQ</a>
       </div>
       <a class="cw-btn cw-btn--cream" href="/soul/">Awaken <span class="arrow" aria-hidden="true">↗</span></a>
@@ -118,7 +119,7 @@
         </div>
       </section>
 
-      <!-- The three worlds -->
+      <!-- Explore Chog World -->
       <section class="worlds" aria-labelledby="worlds-h">
         <p class="cw-tag">Explore</p>
         <h2 id="worlds-h" class="cw-display section-title">Meet your Chog. Enter its world.</h2>
@@ -142,6 +143,33 @@
               <div><dt>Wage</dt><dd data-stat="wage">–</dd></div>
             </dl>
             <a class="cw-btn cw-btn--cream" href="/city/">Enter City <span class="arrow" aria-hidden="true">↗</span></a>
+          </article>
+        </div>
+      </section>
+
+      <section class="worlds bot-section" id="chog-bot" aria-labelledby="bot-h">
+        <p class="cw-tag">Chog Bot</p>
+        <h2 id="bot-h" class="cw-display section-title">Your Chog, by your side.</h2>
+        <p class="bot-intro">Bring your awakened Chog into Codex or Claude Code. Connect your wallet, sign once, and choose from your Chogs by name and artwork. No token ID needed.</p>
+        <div class="world-cards">
+          <article class="world cw-reveal">
+            <span class="world-kicker">Available now · Local CLI</span>
+            <h3 class="world-name">Meet your coding companion</h3>
+            <p>Your Chog's character and five skills, with local memory, Monad analysis and $CHOG on-chain reports. The core runs on your computer without a Chog World server or $CHOG credits; your coding assistant supplies the model.</p>
+            <p>Install Node.js 24 or newer, then run these commands in your terminal:</p>
+            <pre class="bot-commands" aria-label="Install the Chog CLI and connect your wallet"><code>git clone https://github.com/KAMEVETRICS/chog-world.git
+cd chog-world
+npm --prefix cli ci
+node cli/bin/chog.js login</code></pre>
+            <p>On Windows PowerShell, use <code>npm.cmd</code> in place of <code>npm</code>. After choosing your Chog, run <code>node cli/bin/chog.js setup codex</code> or <code>node cli/bin/chog.js setup claude-code</code> for your assistant's setup command.</p>
+            <a class="cw-btn cw-btn--cream" href="https://github.com/KAMEVETRICS/chog-world/blob/main/cli/README.md">CLI setup guide <span class="arrow" aria-hidden="true">↗</span></a>
+          </article>
+          <article class="world cw-reveal">
+            <span class="world-kicker">Discord · Coming soon</span>
+            <h3 class="world-name">A voice for your community</h3>
+            <p>Discord replies are the next step. Holder bot settings already live in Soul: choose a profile, allowed servers and a daily reply limit for your awakened Chog.</p>
+            <p>Open Soul, sign in, choose your Chog and scroll to its bot settings. Saving those preferences does not connect a Discord bot yet.</p>
+            <a class="cw-btn cw-btn--cream" href="/soul/">Open holder settings <span class="arrow" aria-hidden="true">↗</span></a>
           </article>
         </div>
       </section>
@@ -190,7 +218,7 @@
     <footer class="site-footer">
       <span class="cw-logo">Chog World</span>
       <span>Built on Monad with ERC-8004 identities, an ERC-8217-style binding and Tokenbound (ERC-6551) wallets.</span>
-      <nav aria-label="Footer"><a href="/soul/">Soul</a><a href="/city/">City</a></nav>
+      <nav aria-label="Footer"><a href="/soul/">Soul</a><a href="/city/">City</a><a href="#chog-bot">Chog Bot</a></nav>
     </footer>
 
     <script type="module" src="/src/home/main.ts"></script>

@@ -189,6 +189,16 @@ section { padding: clamp(56px, 9vw, 110px) clamp(16px, 5vw, 48px); }
 .world-facts dd { margin: 2px 0 0; font: 700 1.05rem/1.2 var(--cw-display); color: var(--cw-cream); white-space: nowrap; }
 .world .cw-btn { align-self: stretch; }
 
+/* Bot entry point shares the existing world cards and navigation. */
+.bot-section { scroll-margin-top: 130px; }
+.bot-intro { max-width: 65ch; margin: -12px 0 28px; color: var(--cw-muted); }
+.bot-section .world { min-width: 0; }
+.bot-section .world p { flex: none; }
+.bot-section .world .cw-btn { margin-top: auto; }
+.bot-section code { overflow-wrap: anywhere; }
+.bot-commands { max-width: 100%; overflow-x: auto; padding: 16px; margin: 0; background: var(--cw-black); border: 1px solid var(--cw-line); color: var(--cw-cream); font-size: 0.82rem; line-height: 1.8; }
+.bot-commands code { overflow-wrap: normal; }
+
 /* ---- FAQ ---- */
 .faq { max-width: 820px; margin: 0 auto; }
 .faq-head { display: flex; align-items: center; gap: 14px; }

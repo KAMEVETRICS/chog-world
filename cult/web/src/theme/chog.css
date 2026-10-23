@@ -112,6 +112,7 @@
 .cw-logo svg { width: 30px; height: 30px; }
 .cw-nav-links { display: flex; gap: 4px; margin-left: auto; }
 .cw-nav-links a {
+  white-space: nowrap;
   position: relative;
   padding: 8px 12px;
   color: var(--cw-muted);

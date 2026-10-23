@@ -134,7 +134,7 @@ describe('citizens', () => {
 });
 
 describe('the fixture client', () => {
-  it('lets Citizen C join and pick a job, with idempotency and version fences', async () => {
+  it('lets Villager C join and pick a job, with idempotency and version fences', async () => {
     const client = new FixtureCityClient({ autoStart: false });
     client.setActor(null);
     expect(await client.joinCity({ name: 'Clover', look: villagerLookFor(FIXTURE_ACTORS.C.address) }, 'join-1')).toEqual({ ok: false, code: 'LOGIN_REQUIRED' });

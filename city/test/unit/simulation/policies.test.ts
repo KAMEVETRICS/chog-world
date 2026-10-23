@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { WorldState } from '../../../src/shared/contracts';
 import { makeFixtureWorld } from '../../../src/fixtures/residents';
-import { isRestTick, socialPlace } from '../../../src/simulation/policies';
+import { isRestTick, socialPlace, temperament } from '../../../src/simulation/policies';
 import { step } from '../../../src/simulation/step';
 import { GREETING_COOLDOWN_TICKS } from '../../../src/shared/rules';
 
@@ -151,5 +151,33 @@ describe('focus policies', () => {
     const b = advance(reversed, 30);
     const byKey = (w: WorldState) => Object.fromEntries(w.agents.map((x) => [x.key, x]));
     expect(byKey(b)).toEqual(byKey(a));
+  });
+});
+
+describe('temperament', () => {
+  it('is fixed by token ID: the same Chog always has the same habits', () => {
+    const [a] = makeFixtureWorld({ residentCount: 1 }).agents;
+    expect(temperament(a!)).toEqual(temperament({ identity: { ...a!.identity } }));
+  });
+
+  it('breaks the herd: on the first morning the builders head to more than one site', () => {
+    const world = makeFixtureWorld();
+    for (const agent of world.agents) agent.policy.focus = 'builder';
+    const sites = new Set<string>();
+    let current = world;
+    for (let i = 0; i < 3; i += 1) {
+      current = step({ world: current }).world;
+      const here = current.agents.filter((a) => a.location.kind === 'place').map((a) => (a.location as { placeId: string }).placeId);
+      if (new Set(here).size > 1) here.forEach((s) => sites.add(s));
+    }
+    expect(sites.size).toBeGreaterThan(1);
+  });
+
+  it('staggers the social round, yet friends still share most of each stop', () => {
+    const phases = [0, 1, 2, 3];
+    for (const phase of phases) expect(socialPlace('0', phase)).toBe('plaza');
+    // A resident a tick out of phase moves on a tick earlier, and is with the others the rest of the stay.
+    const together = Array.from({ length: 12 }, (_, t) => socialPlace(String(t), 0) === socialPlace(String(t), 1)).filter(Boolean).length;
+    expect(together).toBe(9);
   });
 });

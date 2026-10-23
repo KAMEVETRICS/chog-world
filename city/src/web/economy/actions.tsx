@@ -26,6 +26,9 @@ export const ACTION_ERRORS: Record<ActionRefusal, string> = {
 
 export const ASSET_LABEL: Record<AccountAsset, string> = { coins: 'Coins', wood: 'Wood', stone: 'Stone', food: 'Food' };
 
+/** "1 coin", "5 coins", "3 wood". */
+export const amountOf = (amount: number, asset: AccountAsset) => (asset === 'coins' ? `${amount} ${amount === 1 ? 'coin' : 'coins'}` : `${amount} ${asset}`);
+
 /** Runs one action at a time and remembers how it went, for a status line. */
 export function useAct(onAct: OnAct) {
   const [busy, setBusy] = useState(false);
@@ -91,7 +94,7 @@ export function GiftForm({ world, from, fromKey, canGiveMaterials, onAct }: { wo
       onSubmit={(e) => {
         e.preventDefault();
         if (amount === null) return;
-        void run({ type: 'gift', from, to, asset: chosen, amount }, `Gave ${name} ${amount} ${ASSET_LABEL[chosen].toLowerCase()}.`);
+        void run({ type: 'gift', from, to, asset: chosen, amount }, `Gave ${name} ${amountOf(amount, chosen)}.`);
       }}
     >
       <label className="look-pick">

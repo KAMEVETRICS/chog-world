@@ -6,6 +6,7 @@ import { PROJECTS, VOTE_ACTIVE_DAYS } from '../../shared/rules';
 import { canVote } from '../../simulation/citizens';
 import { describeProposalChange, quorumOf, tally } from '../../simulation/governance';
 import { ActionStatus, AmountInput, ASSET_LABEL, parseAmount, useAct, type OnAct } from './actions';
+import { hours } from '../format';
 
 const STATUS_LABEL = { open: 'Open', passed: 'Passed', rejected: 'Not passed', failed: 'Could not apply' } as const;
 
@@ -143,7 +144,7 @@ export function Votes({ world, me, onAct }: { world: WorldState; me: CitizenStat
                 </p>
                 <p className="vote-tally num">
                   {yes} yes · {no} no
-                  {p.status === 'open' ? ` · needs ${quorum} ${quorum === 1 ? 'vote' : 'votes'} · closes in ${Math.max(0, left)} ${left === 1 ? 'tick' : 'ticks'}` : ''}
+                  {p.status === 'open' ? ` · needs ${quorum} ${quorum === 1 ? 'vote' : 'votes'} · closes in ${hours(Math.max(0, left))}` : ''}
                 </p>
                 {p.outcome ? <p className="setting-hint">{p.outcome}</p> : null}
                 {p.speeches.length ? (

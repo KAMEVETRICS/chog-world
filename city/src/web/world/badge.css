@@ -1,0 +1,28 @@
+/* NFT portraits: a trait drawing underneath, the real image fading in on top when a gateway delivers it. */
+.nft-portrait {
+  position: relative;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+}
+
+.nft-portrait-drawing {
+  display: grid;
+  place-items: center;
+  margin-top: 6%;
+}
+
+.nft-portrait img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity var(--t-slow) var(--ease-out);
+}
+
+.nft-portrait img.is-loaded {
+  opacity: 1;
+}

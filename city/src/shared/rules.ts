@@ -9,7 +9,7 @@
 //   social rotation between the three places Cult counts.
 import type { DecorId, HomeStyle, Job, Needs, Params, PlaceId, ProjectAmounts, ProjectId, Resource, ResourceAmounts, VillagerLook } from './contracts';
 
-export const RULESET_VERSION = 'city-m2-citizens';
+export const RULESET_VERSION = 'city-m3-life';
 export const TICK_MS = 10_000;
 export const RESOURCE_CAP = 20;
 export const GREETING_COOLDOWN_TICKS = 6;
@@ -20,9 +20,19 @@ export const DAY_START_TICK = 4;
 /** Hour of the day (0 = dawn) when the earliest residents go to bed; each token ID adds 0-2 ticks. */
 export const BEDTIME_TICK = 19;
 export const BEDTIME_SPREAD = 3;
-/** Everyone is up again at this hour. Sleep ticks are not eligible build ticks. */
+/** The earliest risers are up at this hour; each token ID may lie in up to WAKE_SPREAD - 1 ticks more. Sleep ticks are not eligible build ticks. */
 export const WAKE_TICK = 34;
-/** Social residents move together between the places Cult counts, staying this many ticks at each. */
+export const WAKE_SPREAD = 2;
+/** Workers' midday break: LUNCH_TICKS at the tavern, starting at an hour between these, set per resident. */
+export const LUNCH_EARLIEST = 8;
+export const LUNCH_LATEST = 14;
+export const LUNCH_TICKS = 2;
+export const LUNCH_PLACE: PlaceId = 'tavern';
+/** Social residents go to bed this many ticks later than workers. */
+export const NIGHT_OWL_TICKS = 3;
+/** A builder weighs up to this much spare wood or stone (set per resident) when choosing what to fetch next. */
+export const MAX_SPARE = 4;
+/** Social residents make a round of the places Cult counts, staying this many ticks at each (each starts its stay at its own phase). */
 export const SOCIAL_PLACES = ['plaza', 'tavern', 'workshop'] as const satisfies readonly PlaceId[];
 export const SOCIAL_STAY_TICKS = 4;
 export const STALE_OBSERVATION_MS = 8_000;
@@ -52,9 +62,16 @@ export interface HomeRecipe {
   buildTicks: number;
 }
 
+/**
+ * Five levels, each costlier and slower than the last. The top levels need a nearly full storehouse: every cost
+ * stays reachable under RESOURCE_CAP, given each site's yield (wood <= 20 - 3, stone <= 20 - 2).
+ */
 export const HOME_RECIPES: readonly HomeRecipe[] = [
   { level: 1, costs: { wood: 6, stone: 4, food: 2 }, buildTicks: 2 },
   { level: 2, costs: { wood: 12, stone: 8, food: 4 }, buildTicks: 2 },
+  { level: 3, costs: { wood: 15, stone: 12, food: 6 }, buildTicks: 3 },
+  { level: 4, costs: { wood: 17, stone: 15, food: 8 }, buildTicks: 4 },
+  { level: 5, costs: { wood: 17, stone: 18, food: 10 }, buildTicks: 5 },
 ];
 export const MAX_HOME_LEVEL = HOME_RECIPES.length;
 

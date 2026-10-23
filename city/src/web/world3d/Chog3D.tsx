@@ -1,7 +1,6 @@
 // The Chog, modelled on the official character: a chibi biped with a big purple head, swept
 // hedgehog spikes, a cream face mask, huge glossy eyes, pink cheeks, pink mittens and feet.
 // Movement is procedural: a bouncy walk cycle, then a per-activity loop once it arrives.
-import { Html } from '@react-three/drei';
 import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
@@ -11,11 +10,17 @@ import { Aura, Eyes, Hat, Held, hidesCrown, Mouth, MouthProp, Outfit, sleeveColo
 import { geo } from './geometry';
 import { PALETTE, toon } from './materials';
 import { useOverlayPortal } from './overlay';
+import { track } from './tracking';
+import { route, routeLength } from './paths';
+import type { XZ } from './layout';
+import { LABEL_PRIORITY, ScaledHtml } from './ScaledHtml';
 import { Part as InkPart } from './parts';
 
 export type ChogAction = 'idle' | 'chop' | 'mine' | 'harvest' | 'hammer' | 'sleep' | 'wave' | 'paused' | 'frozen';
 
 const OUTLINE = 0.018;
+/** Bubbles and name tags: full size within ~28 units (the follow cam), shrinking with distance beyond. */
+const TAG_SCALE = 28;
 const { damp } = THREE.MathUtils;
 
 /** Spikes on the head: [position, rotation, base radius, length]. Swept back like the official art. */
@@ -39,6 +44,31 @@ function Part({ outline = true, ...props }: Omit<React.ComponentProps<typeof Ink
   return <InkPart outline={outline ? OUTLINE : 0} {...props} />;
 }
 
+/** Walking pace in world units per second, and the longest a walk may take (ticks are 10 s apart). */
+const WALK_SPEED = 2.1;
+const MAX_WALK_SECONDS = 7;
+
+interface Walk {
+  points: XZ[];
+  /** Distance along the route at each point. */
+  lengths: number[];
+  total: number;
+  start: number;
+  duration: number;
+}
+
+/** Position and heading a fraction `p` of the way along a walk. */
+function along(w: Walk, p: number): { at: XZ; heading: number } {
+  const d = p * w.total;
+  let i = 1;
+  while (i < w.points.length - 1 && w.lengths[i]! < d) i += 1;
+  const a = w.points[i - 1] ?? w.points[0]!;
+  const b = w.points[i] ?? a;
+  const span = (w.lengths[i] ?? 0) - (w.lengths[i - 1] ?? 0);
+  const k = span > 0 ? (d - w.lengths[i - 1]!) / span : 1;
+  return { at: [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k], heading: Math.atan2(b[0] - a[0], b[1] - a[1]) };
+}
+
 function shortestAngle(from: number, to: number): number {
   let d = (to - from) % (Math.PI * 2);
   if (d > Math.PI) d -= Math.PI * 2;
@@ -59,10 +89,14 @@ export interface Chog3DProps {
   reducedMotion: boolean;
   /** Asleep in a built home: walks to the door, then steps inside out of sight. */
   indoors?: boolean;
+  /** Registers the live body under this key, so the camera can follow it. */
+  trackKey?: string;
+  /** The viewer's own resident: its bubble wins over strangers' when labels crowd. */
+  mine?: boolean;
   onSelect: () => void;
 }
 
-export function Chog3D({ seed, appearance, target, face, action, glyph, name, selected, reducedMotion, indoors = false, onSelect }: Chog3DProps) {
+export function Chog3D({ seed, appearance, target, face, action, glyph, name, selected, reducedMotion, indoors = false, trackKey, mine = false, onSelect }: Chog3DProps) {
   const root = useRef<THREE.Group>(null!);
   const presence = useRef<THREE.Group>(null!);
   const facing = useRef<THREE.Group>(null!);
@@ -77,20 +111,22 @@ export function Chog3D({ seed, appearance, target, face, action, glyph, name, se
   const [hovered, setHovered] = useState(false);
   const overlay = useOverlayPortal();
 
-  const walk = useRef({ from: new THREE.Vector2(...target), to: new THREE.Vector2(...target), start: -1, duration: 0 });
+  const walk = useRef<Walk>({ points: [target], lengths: [0], total: 0, start: -1, duration: 0 });
   const clock = useRef(0);
 
-  // A new committed position starts a walk from wherever the Chog currently is.
+  // A new committed position starts a walk from wherever the Chog currently is, along the roads.
   useEffect(() => {
-    const w = walk.current;
-    const current = root.current ? new THREE.Vector2(root.current.position.x, root.current.position.z) : w.to.clone();
-    const next = new THREE.Vector2(...target);
-    const distance = current.distanceTo(next);
-    w.from.copy(current);
-    w.to.copy(next);
-    w.start = clock.current;
-    w.duration = reducedMotion ? 0 : Math.min(4.5, Math.max(0.4, distance / 2.1));
+    const here: XZ = root.current ? [root.current.position.x, root.current.position.z] : target;
+    const points = route(here, target);
+    const lengths = [0];
+    for (let i = 1; i < points.length; i += 1) lengths.push(lengths[i - 1]! + routeLength([points[i - 1]!, points[i]!]));
+    const total = lengths[lengths.length - 1]!;
+    // Strolling pace, quickened on long trips so everyone arrives well before the next tick.
+    const speed = Math.max(WALK_SPEED, total / MAX_WALK_SECONDS);
+    walk.current = { points, lengths, total, start: clock.current, duration: reducedMotion ? 0 : Math.max(0.4, total / speed) };
   }, [target[0], target[1], reducedMotion]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useLayoutEffect(() => (trackKey ? track(trackKey, root.current) : undefined), [trackKey]);
 
   useLayoutEffect(() => {
     root.current.position.set(target[0], 0, target[1]);
@@ -105,13 +141,12 @@ export function Chog3D({ seed, appearance, target, face, action, glyph, name, se
     // --- travel ---------------------------------------------------------------------------
     const w = walk.current;
     const p = w.duration > 0 ? Math.min(1, (state.clock.elapsedTime - w.start) / w.duration) : 1;
-    const x = w.from.x + (w.to.x - w.from.x) * p;
-    const z = w.from.y + (w.to.y - w.from.y) * p;
-    const walking = p < 1 && w.from.distanceTo(w.to) > 0.05;
-    root.current.position.x = x;
-    root.current.position.z = z;
+    const { at, heading } = along(w, p);
+    const walking = p < 1 && w.total > 0.05;
+    root.current.position.x = at[0];
+    root.current.position.z = at[1];
 
-    const yawTarget = walking ? Math.atan2(w.to.x - w.from.x, w.to.y - w.from.y) : face;
+    const yawTarget = walking ? heading : face;
     const yaw = shortestAngle(facing.current.rotation.y, yawTarget);
     facing.current.rotation.y = reducedMotion ? yawTarget : damp(facing.current.rotation.y, yaw, 10, dt);
 
@@ -346,15 +381,24 @@ export function Chog3D({ seed, appearance, target, face, action, glyph, name, se
       ) : null}
       </group>
 
-      <Html {...overlay} position={[0, indoors ? 2.55 : bubbleY, 0]} center distanceFactor={11} zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
+      <ScaledHtml
+        {...overlay}
+        position={[0, indoors ? 2.55 : bubbleY, 0]}
+        factor={TAG_SCALE}
+        origin="50% 100%"
+        priority={selected ? LABEL_PRIORITY.selected : mine ? LABEL_PRIORITY.mine : LABEL_PRIORITY.resident}
+        center
+        zIndexRange={[30, 0]}
+        style={{ pointerEvents: 'none' }}
+      >
         <div className={`bubble3d${selected ? ' is-selected' : ''}`}>
           <GlyphIcon glyph={glyph} size={18} />
         </div>
-      </Html>
+      </ScaledHtml>
       {(selected || hovered) && !indoors ? (
-        <Html {...overlay} position={[0, -0.05, 0.3]} center distanceFactor={11} zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
+        <ScaledHtml {...overlay} position={[0, -0.05, 0.3]} factor={TAG_SCALE} origin="50% 0%" priority={LABEL_PRIORITY.selected} center zIndexRange={[30, 0]} style={{ pointerEvents: 'none' }}>
           <div className="name3d">{name}</div>
-        </Html>
+        </ScaledHtml>
       ) : null}
     </group>
   );

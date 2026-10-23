@@ -1,8 +1,9 @@
-// Village log: committed events, newest first, grouped by tick.
+// Village log: committed events, newest first, grouped by the village hour they happened in.
 import type { CityEvent, WorldState } from '../../shared/contracts';
-import { describeChange } from '../format';
+import { describeChange, whenLabel } from '../format';
+import { dayNumber, phaseName, timeOfDay } from '../world3d/daylight';
 
-const FEED_SOURCE: Partial<Record<CityEvent['type'], string>> = { citizen_joined: 'Citizen', job_changed: 'Citizen', params_changed: 'City Hall', city_action: 'Town', council: 'Council' };
+const FEED_SOURCE: Partial<Record<CityEvent['type'], string>> = { citizen_joined: 'Villagers', job_changed: 'Villagers', params_changed: 'City Hall', city_action: 'Town', council: 'Council' };
 
 export function ActivityFeed({ events, world, filterKey }: { events: CityEvent[]; world: WorldState; filterKey?: string | null }) {
   const groups = [...events]
@@ -18,15 +19,22 @@ export function ActivityFeed({ events, world, filterKey }: { events: CityEvent[]
     .slice(0, 30);
 
   if (groups.length === 0) {
-    return <p className="feed-empty">Nothing yet. The village wakes on the next tick.</p>;
+    return <p className="feed-empty">Nothing yet. The village stirs within the hour.</p>;
   }
 
   return (
     <ol className="feed" aria-label="Village log">
       {groups.map(({ event, lines }) => (
         <li key={event.revision} className="feed-tick">
-          <span className="feed-when num">
-            {event.type === 'city_tick' ? `Tick ${event.data.tick}` : FEED_SOURCE[event.type] ?? 'Holder'}
+          <span className="feed-when num" aria-label={event.type === 'city_tick' ? whenLabel(event.data.tick) : undefined}>
+            {event.type === 'city_tick' ? (
+              <>
+                <span className="feed-day">Day {dayNumber(Number(event.data.tick))}</span>
+                <span className="feed-phase">{phaseName(timeOfDay(Number(event.data.tick)))}</span>
+              </>
+            ) : (
+              FEED_SOURCE[event.type] ?? 'Holder'
+            )}
           </span>
           <ul>
             {lines.map((line, i) => (

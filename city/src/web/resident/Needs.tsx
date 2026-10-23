@@ -4,6 +4,7 @@ import { DECOR_IDS, NEED_IDS, RESOURCES, type AgentState, type DecorateRequest, 
 import { DECOR, MAX_DECOR } from '../../shared/rules';
 import { moodOf, type MoodKind } from '../../simulation/needs';
 import { RESOURCE_LABEL } from '../format';
+import { DecorArt, NeedIcon } from './sheet-art';
 
 const NEED_LABEL: Record<Need, string> = { energy: 'Energy', hunger: 'Hunger', fun: 'Fun', social: 'Social' };
 
@@ -40,8 +41,11 @@ export function NeedsView({ agent }: { agent: AgentState }) {
         {NEED_IDS.map((need) => {
           const value = agent.needs[need];
           return (
-            <div key={need} className={`need${value < 30 ? ' need--low' : ''}`}>
-              <dt>{NEED_LABEL[need]}</dt>
+            <div key={need} className={`need need--${need}${value < 30 ? ' need--low' : ''}`}>
+              <dt>
+                <NeedIcon need={need} />
+                {NEED_LABEL[need]}
+              </dt>
               <dd>
                 <span className="need-bar" role="img" aria-label={`${NEED_LABEL[need]} ${value} of 100`}>
                   <span style={{ width: `${value}%` }} />
@@ -109,27 +113,33 @@ export function DecorShop({
   return (
     <div className="decor">
       {owned.length ? (
-        <ul className="decor-owned" aria-label="Decorations">
+        <ul className="decor-grid" aria-label="Decorations">
           {owned.map((item) => (
-            <li key={item} className="decor-chip">
-              {DECOR[item].name}
+            <li key={item} className="decor-card is-owned">
+              <DecorArt item={item} />
+              <span className="decor-name">{DECOR[item].name}</span>
+              <span className="decor-placed">In the garden</span>
             </li>
           ))}
         </ul>
       ) : (
         <p className="readonly-note">No decorations yet.</p>
       )}
-      {canEdit ? (
+      {canEdit && owned.length < DECOR_IDS.length ? (
         <>
-          <p className="decor-hint">Each one brightens this Chog's mood and adds fun while it rests at home. Paid from free stores.</p>
-          <ul className="decor-shop">
+          <p className="decor-hint">
+            Each one makes {agent.name} happier and adds fun while it rests at home. Paid from its free stores
+            {owned.length >= MAX_DECOR ? '' : `, ${MAX_DECOR - owned.length} more ${MAX_DECOR - owned.length === 1 ? 'fits' : 'fit'}`}.
+          </p>
+          <ul className="decor-grid" aria-label="Decoration shop">
             {DECOR_IDS.filter((item) => !owned.includes(item)).map((item) => (
-              <li key={item}>
+              <li key={item} className="decor-card">
+                <DecorArt item={item} />
                 <span className="decor-name">{DECOR[item].name}</span>
                 <span className="decor-cost num">{costText(item)}</span>
                 <button
                   type="button"
-                  className="button button--quiet button--small"
+                  className="button button--quiet button--small decor-buy"
                   disabled={busy !== null || owned.length >= MAX_DECOR}
                   onClick={() => void buy(item)}
                   aria-label={`Buy ${DECOR[item].name} for ${costText(item)}`}

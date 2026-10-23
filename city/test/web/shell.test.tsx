@@ -11,6 +11,11 @@ function setup() {
   return { client, user };
 }
 
+/** Opens one section of the selected Chog's card. */
+async function openSection(user: ReturnType<typeof userEvent.setup>, name: 'Life' | 'Home' | 'Market' | 'Council' | 'Settings') {
+  await user.click(await screen.findByRole('tab', { name }));
+}
+
 async function ticks(client: FixtureCityClient, n: number) {
   await act(async () => {
     for (let i = 0; i < n; i += 1) client.tick();
@@ -24,16 +29,18 @@ describe('observation shell', () => {
     setup();
     expect(await screen.findByRole('heading', { name: 'Mossy' })).toBeInTheDocument();
     expect(screen.getByText('Chog #0')).toBeInTheDocument();
-    expect(screen.getByText('Fixture village')).toBeInTheDocument();
-    expect(screen.getByText(/No wallet or chain is connected/)).toBeInTheDocument();
+    expect(screen.getByText('Demo village')).toBeInTheDocument();
+    expect(screen.getByText(/No wallet or blockchain is connected/)).toBeInTheDocument();
   });
 
-  it('renders all 8 residents on the map as keyboard-reachable buttons', async () => {
+  it('renders all 8 residents and the 3 villagers on the map as keyboard-reachable buttons', async () => {
     setup();
     const map = await screen.findByRole('group', { name: /map of/i });
-    const chogs = within(map).getAllByRole('button');
+    const chogs = within(map).getAllByRole('button', { name: /Chog #/ });
+    const villagers = within(map).getAllByRole('button', { name: /villager\./ });
     expect(chogs).toHaveLength(8);
-    chogs.forEach((chog) => expect(chog).toHaveAttribute('tabindex', '0'));
+    expect(villagers).toHaveLength(3);
+    [...chogs, ...villagers].forEach((token) => expect(token).toHaveAttribute('tabindex', '0'));
   });
 
   it('selects a resident from the roster list and persists it in the URL', async () => {
@@ -49,7 +56,7 @@ describe('observation shell', () => {
     const { client } = setup();
     await ticks(client, 3);
     expect(await screen.findByText('6 reserved')).toBeInTheDocument();
-    expect(screen.getByText('Building level 1 · 2 ticks left')).toBeInTheDocument();
+    expect(screen.getByText('Building its cottage · 2 hours left')).toBeInTheDocument();
   });
 });
 
@@ -58,6 +65,7 @@ describe('holder settings', () => {
     const { user } = setup();
     await user.click(await screen.findByRole('radio', { name: 'Visitor' }));
     expect(screen.getByText('View only')).toBeInTheDocument();
+    await openSection(user, 'Settings');
     expect(screen.getByRole('switch')).toBeDisabled();
     expect(screen.queryByRole('button', { name: 'Save settings' })).not.toBeInTheDocument();
   });
@@ -66,6 +74,7 @@ describe('holder settings', () => {
     const { client, user } = setup();
     await screen.findByRole('heading', { name: 'Mossy' });
     await ticks(client, 3);
+    await openSection(user, 'Settings');
     const save = screen.getByRole('button', { name: 'Save settings' });
     expect(save).toBeDisabled(); // nothing changed yet: a no-op cannot be saved
 
@@ -74,13 +83,16 @@ describe('holder settings', () => {
     await user.click(save);
 
     expect(await screen.findByText('Paused by its holder')).toBeInTheDocument();
+    await openSection(user, 'Life');
     expect(screen.queryByText(/reserved/)).not.toBeInTheDocument();
+    await openSection(user, 'Home');
     expect(screen.getByText('An empty lot')).toBeInTheDocument();
   });
 
   it('a stale form surfaces the newer version instead of overwriting it', async () => {
     const { client, user } = setup();
     await screen.findByRole('heading', { name: 'Mossy' });
+    await openSection(user, 'Settings');
     await user.click(screen.getByRole('radio', { name: 'Gatherer' }));
 
     // Another tab changes the same Chog first.
@@ -106,6 +118,7 @@ describe('holder settings', () => {
     expect(screen.getByText('View only')).toBeInTheDocument();
     await user.click(screen.getByRole('radio', { name: 'Holder B' }));
     expect(await screen.findByText('Yours')).toBeInTheDocument();
+    await openSection(user, 'Settings');
     expect(screen.getByRole('switch')).toHaveAttribute('aria-checked', 'false');
   });
 });
@@ -123,6 +136,7 @@ describe('needs, mood and decorating', () => {
   it('the holder buys a decoration from the Chog stores; a visitor only sees it', async () => {
     const { user } = setup();
     await screen.findByRole('heading', { name: 'Mossy' });
+    await openSection(user, 'Home');
     expect(screen.getByText('No decorations yet.')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Buy Lantern for 2 wood' }));
     expect(await screen.findByText('Lantern added.')).toBeInTheDocument();
@@ -140,6 +154,7 @@ describe('needs, mood and decorating', () => {
   it('says so when the stores can’t pay', async () => {
     const { user } = setup();
     await screen.findByRole('heading', { name: 'Mossy' });
+    await openSection(user, 'Home');
     await user.click(screen.getByRole('button', { name: /Buy Well/ }));
     expect(await screen.findByText("Not enough free materials in this Chog's stores.")).toBeInTheDocument();
   });
@@ -150,15 +165,15 @@ describe('town: citizens and City Hall', () => {
     const { user } = setup();
     await user.click(await screen.findByRole('radio', { name: 'Visitor' }));
     await user.click(screen.getByRole('tab', { name: 'Town' }));
-    expect(screen.getByText(/Pick Holder A, Holder B or Citizen C/)).toBeInTheDocument();
-    expect(screen.getByRole('table', { name: /The constitution/ })).toBeInTheDocument();
+    expect(screen.getByText(/Pick Holder A, Holder B or Villager C/)).toBeInTheDocument();
+    expect(screen.getByRole('table', { name: /City rules/ })).toBeInTheDocument();
     expect(screen.getByRole('rowheader', { name: 'Wage' })).toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: 'Villagers' })).getAllByRole('listitem')).toHaveLength(3);
   });
 
-  it('Citizen C joins without an NFT, takes a job and is paid by the city', async () => {
+  it('Villager C joins without an NFT, takes a job and is paid by the city', async () => {
     const { client, user } = setup();
-    await user.click(await screen.findByRole('radio', { name: 'Citizen C' }));
+    await user.click(await screen.findByRole('radio', { name: 'Villager C' }));
     await user.click(screen.getByRole('tab', { name: 'Town' }));
     const join = screen.getByRole('button', { name: 'Join Chog City' });
     expect(join).toBeDisabled();
@@ -179,10 +194,10 @@ describe('town: citizens and City Hall', () => {
     const { user } = setup();
     await user.click(await screen.findByRole('tab', { name: 'Town' }));
     await user.click(screen.getByRole('button', { name: 'Raise the wage by 2' }));
-    expect(await screen.findByText(/Enacted/)).toBeInTheDocument();
+    expect(await screen.findByText(/Done. The new numbers/)).toBeInTheDocument();
     expect(within(screen.getByRole('row', { name: /Wage/ })).getByText('7 coins')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Try raising the wage by 5' }));
-    expect(await screen.findByText(/Refused by the constitution: Wage must stay between 0 and 10/)).toBeInTheDocument();
+    expect(await screen.findByText(/Not allowed by the city rules: Wage must stay between 0 and 10/)).toBeInTheDocument();
   });
 });
 
@@ -190,11 +205,12 @@ describe('the economy', () => {
   it("a holder sells Mossy's wood at the Plaza market and Mossy earns coins", async () => {
     const { user } = setup();
     await screen.findByRole('heading', { name: 'Mossy' });
+    await openSection(user, 'Market');
     const market = screen.getByRole('table', { name: /Lantern Plaza market/ });
     expect(within(market).getByRole('rowheader', { name: 'Wood' })).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Sell 1 wood' }));
     expect(await screen.findByText('Sold 1 wood.')).toBeInTheDocument();
-    expect(screen.getByText('5 coins')).toBeInTheDocument();
+    expect(screen.getByText((_, el) => el?.tagName === 'P' && el.textContent?.startsWith('Mossy has 5 coins.') === true)).toBeInTheDocument();
     await user.click(screen.getByRole('tab', { name: 'Village log' }));
     expect(screen.getByText(/Mossy sold 1 wood at the market for 5 coins/)).toBeInTheDocument();
   });
@@ -202,26 +218,28 @@ describe('the economy', () => {
   it('a visitor sees prices and offers but cannot trade, hire or give', async () => {
     const { user } = setup();
     await user.click(await screen.findByRole('radio', { name: 'Visitor' }));
+    await openSection(user, 'Market');
     expect(screen.getByRole('table', { name: /Lantern Plaza market/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Sell \d/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('form', { name: 'Job offer' })).not.toBeInTheDocument();
     expect(screen.queryByRole('form', { name: 'Give a gift' })).not.toBeInTheDocument();
   });
 
-  it('Mossy hires Citizen C, who takes the job; Citizen C chips in to the fountain', async () => {
+  it('Mossy hires Villager C, who takes the job; Villager C chips in to the fountain', async () => {
     const { user } = setup();
     await screen.findByRole('heading', { name: 'Mossy' });
+    await openSection(user, 'Market');
     await user.selectOptions(screen.getByRole('combobox', { name: 'Job' }), 'quarrier');
     await user.click(screen.getByRole('button', { name: 'Post offer' }));
     expect(await screen.findByText('Job offer posted.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('radio', { name: 'Citizen C' }));
+    await user.click(screen.getByRole('radio', { name: 'Villager C' }));
     await user.click(screen.getByRole('tab', { name: 'Town' }));
     await user.type(screen.getByRole('textbox', { name: /Name/ }), 'Clover');
     await user.click(screen.getByRole('button', { name: 'Join Chog City' }));
     await screen.findByRole('heading', { name: 'Clover' });
     const offers = screen.getByRole('list', { name: 'Job offers' });
-    expect(within(offers).getByText(/Quarrier · 3 coins a tick/)).toBeInTheDocument();
+    expect(within(offers).getByText(/Quarrier · 3 coins an hour/)).toBeInTheDocument();
     await user.click(within(offers).getByRole('button', { name: 'Take job' }));
     expect(await screen.findByText('You now work for Mossy.')).toBeInTheDocument();
 
@@ -238,7 +256,7 @@ describe('the economy', () => {
 describe('votes', () => {
   it('a holder proposes through their Chog, a villager votes, and the rule changes when the vote closes', async () => {
     const { user } = setup();
-    await user.click(await screen.findByRole('radio', { name: 'Citizen C' }));
+    await user.click(await screen.findByRole('radio', { name: 'Villager C' }));
     await user.click(screen.getByRole('tab', { name: 'Town' }));
     await user.type(screen.getByRole('textbox', { name: /Name/ }), 'Clover');
     await user.click(screen.getByRole('button', { name: 'Join Chog City' }));
@@ -249,12 +267,13 @@ describe('votes', () => {
 
     await user.click(screen.getByRole('radio', { name: 'Holder A' }));
     await user.click(screen.getByRole('tab', { name: 'Resident' }));
+    await openSection(user, 'Council');
     const form = screen.getByRole('form', { name: 'Propose for the city' });
     expect(within(form).getByText(/Now 5 coins\. Allowed 0–10, moving at most 2 per vote/)).toBeInTheDocument();
     await user.click(within(form).getByRole('button', { name: 'Propose' }));
     expect(await screen.findByText('Proposed. Villagers have one village day to vote.')).toBeInTheDocument();
 
-    await user.click(screen.getByRole('radio', { name: 'Citizen C' }));
+    await user.click(screen.getByRole('radio', { name: 'Villager C' }));
     await user.click(screen.getByRole('tab', { name: 'Town' }));
     const proposals = screen.getByRole('list', { name: 'Proposals' });
     expect(within(proposals).getAllByText(/Wage to 7 coins/).length).toBeGreaterThan(0);
@@ -271,7 +290,8 @@ describe('the council', () => {
   it("a holder's instructions become their Chog's proposal at the morning council, and the Chogs debate it", async () => {
     const { user } = setup();
     await screen.findByRole('heading', { name: 'Mossy' });
-    const box = screen.getByRole('form', { name: 'Standing instructions' });
+    await openSection(user, 'Council');
+    const box = await screen.findByRole('form', { name: 'Standing instructions' });
     await user.type(within(box).getByRole('textbox'), 'Please cut the income tax.');
     await user.click(within(box).getByRole('button', { name: 'Save instructions' }));
     expect(await screen.findByText(/Saved\. Mossy will follow this at the next council/)).toBeInTheDocument();

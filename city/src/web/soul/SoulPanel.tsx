@@ -144,7 +144,7 @@ function Credits({ config, account }: { config: SoulConfig; account: SoulAccount
             <p className="soul-caution">Credits are a prepaid service balance: they can't be withdrawn or refunded.</p>
           </div>
         ) : payment.mode === 'fixture' ? (
-          <p className="soul-muted">This is a local fixture: credits are granted by the server, not bought.</p>
+          <p className="soul-muted">This is a demo server: credits are given out here, not bought.</p>
         ) : (
           <p className="soul-muted">Top-ups aren't open on this server yet.</p>
         )

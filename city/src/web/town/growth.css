@@ -1,0 +1,79 @@
+/* The village's rank: on the brand plate, and in the Town tab. */
+
+.brand-rank {
+  font-weight: 700;
+  color: var(--chog-deep);
+}
+
+.brand-growth {
+  display: block;
+  height: 4px;
+  margin-top: 5px;
+  border-radius: 999px;
+  background: var(--paper-sunk);
+  overflow: hidden;
+}
+
+.brand-growth > span,
+.growth-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--chog);
+  transition: width var(--t-slow) var(--ease-out);
+}
+
+.growth-ranks {
+  position: relative;
+  height: 18px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ink-3);
+}
+
+/* Each rank's name sits over its point on the bar; the ends stay inside the card. */
+.growth-ranks li {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.growth-ranks li:first-child {
+  transform: none;
+}
+
+.growth-ranks li:last-child {
+  transform: translateX(-100%);
+}
+
+.growth-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background: var(--paper-raised);
+}
+
+.growth-ranks .is-past {
+  color: var(--ink-2);
+}
+
+.growth-ranks .is-current {
+  color: var(--chog-deep);
+}
+
+.growth-bar {
+  position: relative;
+  display: block;
+  height: 10px;
+  margin-bottom: 8px;
+  border-radius: 999px;
+  background: var(--paper-sunk);
+  box-shadow: inset 0 0 0 1px rgba(42, 33, 27, 0.06);
+  overflow: hidden;
+}

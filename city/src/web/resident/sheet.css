@@ -1,0 +1,492 @@
+/* ---------- The Chog card ---------- */
+
+/* Hero: a band in the NFT's own background colour, the portrait sitting on its edge. */
+.sheet-hero {
+  position: relative;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 14px;
+  align-items: start;
+  margin: calc(-1 * var(--s-5)) calc(-1 * var(--s-5)) 0;
+  padding: 18px var(--s-5) 0;
+  isolation: isolate;
+}
+
+.sheet-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 64px;
+  z-index: -1;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.35) 1.2px, transparent 1.4px) 0 0 / 12px 12px,
+    linear-gradient(160deg, var(--hero, var(--chog-soft)), color-mix(in srgb, var(--hero, var(--chog-soft)) 70%, var(--paper-raised)));
+  border-bottom: 1.5px solid var(--ink);
+}
+
+.sheet-portrait {
+  width: 92px;
+  height: 92px;
+  background: var(--hero, var(--chog-soft));
+  border: 2px solid var(--ink);
+  box-shadow: 0 3px 0 var(--ink);
+}
+
+.sheet-hero .resident-id {
+  min-width: 0;
+  padding-top: 52px;
+}
+
+.sheet-hero .resident-id h2 {
+  font-size: 30px;
+}
+
+.sheet-hero .resident-meta {
+  margin-top: 4px;
+  font-size: 12.5px;
+}
+
+/* The full address stays in the tooltip; the card only has room for the name. */
+.sheet-address {
+  display: none;
+}
+
+.sheet-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+}
+
+.sheet-chips .tag {
+  margin: 0;
+  padding: 3px 8px;
+}
+
+.tag--view {
+  background: var(--paper-sunk);
+  color: var(--ink-2);
+}
+
+.mood-chip,
+.coin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 2px 4px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.mood-chip--ok {
+  background: #e3f0de;
+  color: var(--ok);
+}
+
+.mood-chip--warn {
+  background: #f8e8cc;
+  color: var(--warn);
+}
+
+.mood-chip--alert {
+  background: #f6dcd5;
+  color: var(--alert);
+}
+
+.coin-chip {
+  padding-left: 6px;
+  background: #fbefc6;
+  color: #7a5a07;
+}
+
+.coin-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffe68a, #e0a91c 70%);
+  box-shadow: inset 0 0 0 1px rgba(122, 90, 7, 0.55);
+}
+
+/* Section tabs: one row of icon buttons, stuck to the top while the section scrolls. */
+.sheet-tabs {
+  position: sticky;
+  top: calc(-1 * var(--s-5));
+  z-index: 2;
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 3px;
+  margin: var(--s-4) calc(-1 * var(--s-5)) 0;
+  padding: 10px var(--s-5);
+  background: var(--paper-raised);
+  border-bottom: 1px solid var(--rule);
+}
+
+.sheet-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 2px 5px;
+  border: 1.5px solid transparent;
+  border-radius: var(--radius-m);
+  background: transparent;
+  font-size: 11.5px;
+  font-weight: 650;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out), color var(--t-fast) var(--ease-out), transform var(--t-fast) var(--ease-out);
+  --section-fill: none;
+}
+
+.sheet-tab:hover {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.sheet-tab[aria-selected='true'] {
+  border-color: var(--ink);
+  background: var(--chog-soft);
+  color: var(--ink);
+  box-shadow: 0 2px 0 var(--ink);
+  --section-fill: #fff;
+}
+
+.sheet-tab:active {
+  transform: translateY(1px);
+}
+
+.sheet-tab span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sheet-body {
+  animation: sheet-in 220ms var(--ease-out);
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.panel-section--first {
+  margin-top: var(--s-4);
+}
+
+.tab-lede {
+  margin: var(--s-4) 0 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.plan-line {
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--ink-2);
+}
+
+.plan-line strong {
+  color: var(--ink);
+}
+
+/* Needs: a small icon before each label. */
+.need dt {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.need--energy .need-bar > span {
+  background: #e3b62c;
+}
+.need--hunger .need-bar > span {
+  background: #e07a5f;
+}
+.need--fun .need-bar > span {
+  background: var(--chog);
+}
+.need--social .need-bar > span {
+  background: #4f8fd1;
+}
+.need--low .need-bar > span {
+  background: var(--alert);
+}
+
+/* "Saving up for": the next home, ghosted until it's built. */
+.next-home {
+  display: grid;
+  grid-template-columns: 54px 1fr;
+  gap: 12px;
+  align-items: center;
+  margin-top: var(--s-4);
+  padding: 12px 14px;
+  border: 1.5px dashed var(--rule-strong);
+  border-radius: var(--radius-m);
+  background: var(--paper);
+}
+
+.next-home.is-ready,
+.next-home.is-building {
+  border-style: solid;
+  border-color: var(--ok);
+  background: #eef5ea;
+}
+
+.next-home.is-finished {
+  border-style: solid;
+}
+
+.next-home-ghost {
+  opacity: 0.45;
+  filter: saturate(0.4);
+}
+
+.next-home.is-ready .next-home-ghost {
+  opacity: 0.85;
+  filter: none;
+}
+
+.next-home-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 15.5px;
+  font-weight: 650;
+  line-height: 1.25;
+}
+
+.next-home-hint {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--ink-2);
+}
+
+.next-home-parts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.next-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 5px;
+  border-radius: 999px;
+  border: 1px solid var(--rule-strong);
+  background: var(--paper-raised);
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ink-2);
+}
+
+.next-part.is-met {
+  border-color: transparent;
+  color: var(--ink);
+}
+
+.next-part--wood.is-met {
+  background: var(--wood-soft);
+}
+.next-part--stone.is-met {
+  background: var(--stone-soft);
+}
+.next-part--food.is-met {
+  background: var(--food-soft);
+}
+
+.next-home-bar {
+  display: block;
+  height: 8px;
+  margin-top: 7px;
+  border-radius: 999px;
+  background: var(--paper-sunk);
+  overflow: hidden;
+}
+
+.next-home-bar span {
+  display: block;
+  height: 100%;
+  background: var(--ok);
+  transition: width var(--t-slow) var(--ease-out);
+}
+
+/* Decorations as little cards. */
+.decor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--s-2);
+  margin: 0 0 var(--s-3);
+  padding: 0;
+  list-style: none;
+}
+
+.decor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 10px 8px;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-m);
+  background: var(--paper);
+  text-align: center;
+}
+
+.decor-card.is-owned {
+  border-color: var(--ok);
+  background: #eef5ea;
+}
+
+.decor-card .decor-name {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.decor-card .decor-cost {
+  font-size: 11.5px;
+}
+
+.decor-placed {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--ok);
+}
+
+.decor-buy {
+  margin-top: 6px;
+  width: 100%;
+  border-radius: 999px;
+}
+
+@media (max-width: 760px) {
+  .sheet-hero {
+    margin: calc(-1 * var(--s-4)) calc(-1 * var(--s-4)) 0;
+    padding: 14px var(--s-4) 0;
+    grid-template-columns: 76px 1fr;
+  }
+  .sheet-portrait {
+    width: 76px;
+    height: 76px;
+  }
+  .sheet-hero .resident-id {
+    padding-top: 50px;
+  }
+  .sheet-hero .resident-id h2 {
+    font-size: 26px;
+  }
+  .sheet-tabs {
+    top: calc(-1 * var(--s-4));
+    margin: var(--s-3) calc(-1 * var(--s-4)) 0;
+    padding: 8px var(--s-4);
+  }
+  .sheet-tab {
+    font-size: 10.5px;
+  }
+}
+
+.next-home-level {
+  margin-left: 4px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--paper-sunk);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--ink-2);
+  vertical-align: 2px;
+}
+
+/* Title and milestones */
+.title-chip {
+  padding: 2px 9px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  font-family: var(--font-display);
+  font-size: 12.5px;
+  font-style: italic;
+  font-weight: 650;
+}
+
+.milestones .setting-hint {
+  margin: 0 0 var(--s-2);
+}
+
+.milestone-track {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.milestone {
+  display: grid;
+  grid-template-columns: 20px 1fr;
+  column-gap: 8px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1.5px solid var(--rule);
+  border-radius: var(--radius-m);
+  background: var(--paper);
+}
+
+.milestone-title {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.milestone-needs {
+  grid-column: 2;
+  font-size: 11.5px;
+  color: var(--ink-3);
+}
+
+.milestone-mark {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--rule-strong);
+  color: var(--rule-strong);
+}
+
+.milestone--earned {
+  border-color: #c2dbbb;
+  background: #eef5ea;
+}
+
+.milestone-mark--earned {
+  border-color: var(--ok);
+  background: var(--ok);
+  color: var(--paper-raised);
+}
+
+.milestone--next {
+  border-color: var(--chog);
+  background: var(--chog-soft);
+}
+
+.milestone-mark--next {
+  border-color: var(--chog);
+  color: var(--chog);
+}
+
+.milestone--later {
+  opacity: 0.7;
+}

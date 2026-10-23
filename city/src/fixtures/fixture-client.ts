@@ -32,7 +32,7 @@ import { admitCitizen, applyJobChange, applyParamChange, citizenKeyOf } from '..
 import { applyDecor } from '../simulation/needs';
 import { DAY_TICKS, TICK_MS } from '../shared/rules';
 import { applyControlChange, applyPolicyChange, hashJson, step } from '../simulation/step';
-import { FIXTURE_ACTORS, fixtureGenesisAccounts, makeFixtureWorld, type FixtureActorId } from './residents';
+import { FIXTURE_ACTORS, fixtureGenesisAccounts, fixtureResident, makeFixtureWorld, type FixtureActorId } from './residents';
 
 const RECENT_EVENTS = 60;
 
@@ -73,7 +73,7 @@ export class FixtureCityClient implements CityClient {
   private readonly tickMs: number;
 
   constructor(options: FixtureClientOptions = {}) {
-    this.world = options.world ?? makeFixtureWorld();
+    this.world = options.world ?? makeFixtureWorld({ lived: true });
     this.accounts = fixtureGenesisAccounts(this.world);
     this.clock = options.clock ?? realClock;
     this.tickMs = options.tickMs ?? TICK_MS;
@@ -248,6 +248,21 @@ export class FixtureCityClient implements CityClient {
   /** Fixture-only: run a whole village day now (votes close after one). */
   skipDay(): void {
     for (let i = 0; i < DAY_TICKS; i += 1) this.tick();
+  }
+
+  /**
+   * A new Chog moves in, as when a holder brings one in on the server: the first free plot in the world file's
+   * order, the admission grant, paused until its holder sets it going. Returns its name, or null when every plot
+   * is taken.
+   */
+  welcomeChog(): string | null {
+    const taken = new Set(this.world.agents.map((a) => a.plotId));
+    const plot = this.world.plots.find((p) => !taken.has(p.id));
+    if (!plot) return null;
+    const resident = fixtureResident(this.world.agents.length, plot, true);
+    const world = { ...this.world, agents: [...this.world.agents, resident] };
+    this.commit('resident_admitted', { world, ledger: [], accounts: [], changes: [], activities: [], actionCount: 0, resultHash: hashJson(world) });
+    return resident.name;
   }
 
   /** The books since genesis (copy). */

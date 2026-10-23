@@ -28,8 +28,10 @@ describe("City's code inside the Cult server", () => {
     expect(cityObservation({ kind: "unavailable", reason: "indexer_lag" }, 5)).toEqual({ status: "unavailable", reason: "indexer_lag", observedAtMs: 5 });
   });
 
-  it("uses City's village layout: 12 plots and the three places Cult counts", () => {
-    expect(new Set(CITY_PLOTS.map((plot) => plot.id)).size).toBe(12);
+  it("uses City's village layout: 36 plots (12 on the main island, 24 in growth districts) and the three places Cult counts", () => {
+    expect(new Set(CITY_PLOTS.map((plot) => plot.id)).size).toBe(36);
+    // Admission takes the first free plot, so the main island fills before any district.
+    expect(CITY_PLOTS.slice(0, 12).map((plot) => plot.id)).toEqual(Array.from({ length: 12 }, (_, i) => `p${String(i + 1).padStart(2, "0")}`));
     expect(CITY_PLACES.map((place) => place.id)).toEqual(expect.arrayContaining(["plaza", "tavern", "workshop", "forest", "quarry", "farm"]));
   });
 });

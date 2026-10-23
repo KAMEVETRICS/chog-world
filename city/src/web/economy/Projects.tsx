@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { PROJECT_IDS, type AccountAsset, type AgentState, type Party, type ProjectId, type WorldState } from '../../shared/contracts';
 import { PROJECTS } from '../../shared/rules';
-import { ActionStatus, AmountInput, ASSET_LABEL, parseAmount, useAct, type OnAct } from './actions';
+import { ActionStatus, AmountInput, amountOf, ASSET_LABEL, parseAmount, useAct, type OnAct } from './actions';
 
 const ASSETS: AccountAsset[] = ['wood', 'stone', 'food', 'coins'];
 
@@ -25,7 +25,7 @@ function Contribute({ projectId, world, givers, onAct }: { projectId: ProjectId;
       onSubmit={(e) => {
         e.preventDefault();
         if (amount === null) return;
-        void run({ type: 'contribute', projectId, from: party, asset: chosen, amount }, `Thank you! Gave ${amount} ${ASSET_LABEL[chosen].toLowerCase()}.`);
+        void run({ type: 'contribute', projectId, from: party, asset: chosen, amount }, `Thank you! Gave ${amountOf(amount, chosen)}.`);
       }}
     >
       {givers.length > 1 ? (

@@ -1,0 +1,100 @@
+/* Floating earnings over residents: rise, hold, fade. Same ink-and-paper look as the 3D labels. */
+
+.pop {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 4px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  box-shadow: 0 2px 0 var(--ink);
+  font-size: 13px;
+  font-weight: 750;
+  white-space: nowrap;
+  color: var(--ink);
+  opacity: 0;
+  animation: pop-rise 2.2s var(--ease-out) forwards;
+}
+
+.pop--big {
+  font-size: 16px;
+  padding: 3px 10px 3px 5px;
+}
+
+.pop--coin {
+  background: #fff3c4;
+  color: #6b4e00;
+}
+
+.pop--star {
+  padding-left: 6px;
+  background: var(--chog);
+  color: #fff;
+}
+
+.pop-dot {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1.2px rgba(30, 21, 48, 0.55);
+}
+
+.pop--big .pop-dot {
+  width: 15px;
+  height: 15px;
+}
+
+.pop-dot--coin {
+  background: radial-gradient(circle at 35% 35%, #ffe68a, #e0a91c 70%);
+}
+.pop-dot--wood {
+  background: var(--wood);
+}
+.pop-dot--stone {
+  background: var(--stone);
+}
+.pop-dot--food {
+  background: var(--food);
+}
+
+@keyframes pop-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+  14% {
+    opacity: 1;
+    transform: translateY(0) scale(1.08);
+  }
+  24% {
+    transform: translateY(-4px) scale(1);
+  }
+  78% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-34px) scale(1);
+  }
+}
+
+/* Reduced motion: no rise or bounce, just a fade in and out. The global rule zeroes durations, so this
+   opts back in to a plain fade. */
+@media (prefers-reduced-motion: reduce) {
+  .pop {
+    animation-name: pop-fade !important;
+    animation-duration: 2.2s !important;
+  }
+}
+
+@keyframes pop-fade {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  10%,
+  80% {
+    opacity: 1;
+  }
+}

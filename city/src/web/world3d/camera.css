@@ -1,0 +1,102 @@
+/* "Following Mossy · Village view": centred over the visible world, above a phone's bottom sheet. */
+
+.camera-chip {
+  position: absolute;
+  z-index: 12;
+  left: calc(50% + (var(--hud-left, 0px) - var(--hud-right, 0px)) / 2);
+  bottom: calc(var(--hud-bottom, 0px) + 18px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 5px 5px 14px;
+  border: 1.5px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper-raised);
+  box-shadow: 0 3px 0 rgba(30, 21, 48, 0.85), 0 14px 30px -18px rgba(30, 21, 48, 0.5);
+  font-size: 13px;
+  white-space: nowrap;
+  animation: camera-chip-in 260ms var(--ease-out);
+}
+
+.camera-chip strong {
+  font-weight: 700;
+}
+
+.camera-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--chog);
+  box-shadow: 0 0 0 3px var(--chog-soft);
+  animation: camera-chip-pulse 1.8s ease-in-out infinite;
+}
+
+.camera-chip-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px 4px 12px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: var(--paper-raised);
+  font-size: 12.5px;
+  font-weight: 650;
+  cursor: pointer;
+  transition: background var(--t-fast) var(--ease-out);
+}
+
+.camera-chip-button:hover {
+  background: #45372d;
+}
+
+.camera-chip-button kbd {
+  padding: 0 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  font: inherit;
+  font-size: 11px;
+}
+
+@keyframes camera-chip-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+}
+
+@keyframes camera-chip-pulse {
+  50% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+}
+
+/* Phones have no Esc key, and the hint row is hidden: keep the chip compact. */
+@media (max-width: 760px) {
+  .camera-chip {
+    bottom: calc(var(--hud-bottom, 0px) + 12px);
+    font-size: 12.5px;
+  }
+  .camera-chip-button kbd {
+    display: none;
+  }
+}
+
+/* While following, the chip says what to do; the controls hint steps aside so the two don't crowd. */
+.hud-hint {
+  transition: opacity var(--t-base) var(--ease-out);
+}
+
+.game:has(.camera-chip) .hud-hint {
+  opacity: 0;
+}
+
+/* Decluttered 3D labels: a crowded label fades out until there's room for it again. */
+.scaled-label {
+  transition: opacity var(--t-base) var(--ease-out);
+}
+
+.scaled-label.is-crowded {
+  opacity: 0;
+}

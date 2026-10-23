@@ -162,8 +162,8 @@ describe('server mode', () => {
     renderServer();
     expect(await screen.findByRole('heading', { name: 'Mossy' })).toBeInTheDocument();
     expect(screen.getByText('Monad mainnet')).toBeInTheDocument();
-    expect(screen.queryByText('Fixture village')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Advance a tick' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Demo village')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Skip an hour' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Sell / })).not.toBeInTheDocument();
     expect(screen.getByText('View only')).toBeInTheDocument();
     await waitFor(() => expect(FakeEventSource.all.map((source) => source.url)).toContain('/api/city/events?after=5'));
@@ -242,6 +242,7 @@ describe('Cult rulers and Chog Soul in City', () => {
     wallet();
     const { user } = renderServer();
     // The persona loads after the resident panel, which takes a moment to render in jsdom.
+    await user.click(await screen.findByRole('tab', { name: 'Soul' }, { timeout: 5000 }));
     expect(await screen.findByText('“Breathe in, build slow.”', {}, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText('Only its holder can talk to it')).toBeInTheDocument();
     expect(screen.queryByRole('textbox', { name: 'Message to Mossy' })).not.toBeInTheDocument();

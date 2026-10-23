@@ -2,6 +2,7 @@
 import type { AgentState, Focus, HomeStyle, Job, PlaceId, PublicChange, Resource, WorldState } from '../shared/contracts';
 import { DECOR, GATHER_SITES, PROJECTS } from '../shared/rules';
 import { isRestTick } from '../simulation/policies';
+import { dayNumber, phaseName, timeOfDay } from './world3d/daylight';
 import type { Glyph } from './world/art';
 
 export const FOCUS_LABEL: Record<Focus, string> = { builder: 'Builder', gatherer: 'Gatherer', social: 'Social' };
@@ -11,6 +12,20 @@ export const FOCUS_HINT: Record<Focus, string> = {
   social: 'Visits the plaza, tavern and workshop, greeting neighbours.',
 };
 export const STYLE_LABEL: Record<HomeStyle, string> = { cottage: 'Cottage', workshop: 'Workshop', treehouse: 'Treehouse' };
+
+/** What each home level is called, per style (index = level - 1). */
+const HOME_NAMES: Record<HomeStyle, readonly string[]> = {
+  cottage: ['cottage', 'two-storey cottage', 'porch cottage', 'farmhouse', 'manor'],
+  workshop: ['workshop', 'big workshop', 'forge', 'mill', 'guildhall'],
+  treehouse: ['treehouse', 'big treehouse', 'two-deck treehouse', 'canopy lodge', 'tree palace'],
+};
+
+/** "porch cottage", or "tent" before the first home. Lower case, for use mid-sentence. */
+export function homeName(style: HomeStyle, level: number): string {
+  if (level <= 0) return 'tent';
+  const names = HOME_NAMES[style];
+  return names[Math.min(level, names.length) - 1]!;
+}
 export const RESOURCE_LABEL: Record<Resource, string> = { wood: 'Wood', stone: 'Stone', food: 'Food' };
 
 export function placeName(world: WorldState, id: PlaceId): string {
@@ -18,6 +33,15 @@ export function placeName(world: WorldState, id: PlaceId): string {
 }
 
 export const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`;
+
+/** "1 hour", "3 hours": village hours (one tick each), the unit players see instead of ticks. */
+export const hours = (n: number) => `${n} ${n === 1 ? 'hour' : 'hours'}`;
+
+/** When a tick happened, in village terms: "Day 3 · Afternoon". */
+export function whenLabel(tick: string): string {
+  const t = Number(tick);
+  return `Day ${dayNumber(t)} · ${phaseName(timeOfDay(t))}`;
+}
 
 export type Tone = 'ok' | 'warn' | 'alert' | 'muted';
 
@@ -34,14 +58,14 @@ export function activityOf(agent: AgentState, world: WorldState): Activity {
   }
   if (!agent.policy.active) return { label: 'Paused by its holder', glyph: 'paused', tone: 'warn' };
   if (isRestTick(agent, world.tick)) {
-    const bed = agent.homeLevel > 0 ? `their ${STYLE_LABEL[agent.homeStyle].toLowerCase()}` : 'their tent';
+    const bed = `their ${homeName(agent.homeStyle, agent.homeLevel)}`;
     const pausedBuild = agent.construction ? ' · building again at dawn' : '';
     return { label: `Asleep in ${bed}${pausedBuild}`, glyph: 'rest', tone: 'ok' };
   }
   if (agent.construction) {
     const n = agent.construction.remainingTicks;
     return {
-      label: `Building level ${agent.construction.targetLevel} · ${n} ${n === 1 ? 'tick' : 'ticks'} left`,
+      label: `Building its ${homeName(agent.policy.homeStyle, agent.construction.targetLevel)} · ${hours(n)} left`,
       glyph: 'build',
       tone: 'ok',
     };
@@ -70,7 +94,7 @@ export function describeChange(change: PublicChange, world: WorldState): string 
     case 'build_started':
       return `${name(change.agentKey)} broke ground on a level ${change.targetLevel} home.`;
     case 'build_completed':
-      return `${name(change.agentKey)} finished a level ${change.level} ${STYLE_LABEL[change.homeStyle].toLowerCase()}.`;
+      return `${name(change.agentKey)} finished a ${homeName(change.homeStyle, change.level)} (level ${change.level}).`;
     case 'build_cancelled':
       return change.cause === 'control'
         ? `${name(change.agentKey)}'s build stopped when the Chog changed hands. Materials were returned.`
@@ -105,7 +129,7 @@ export function describeChange(change: PublicChange, world: WorldState): string 
         : `${name(change.agentKey)} bought ${change.amount} ${change.resource} at the market for ${change.coins} coins.`;
     case 'offer_posted':
       return change.offer
-        ? `${name(change.agentKey)} is hiring a ${JOB_LABEL[change.offer.job].toLowerCase()} at ${change.offer.wage} coins a tick.`
+        ? `${name(change.agentKey)} is hiring a ${JOB_LABEL[change.offer.job].toLowerCase()} at ${change.offer.wage} coins an hour.`
         : `${name(change.agentKey)} stopped hiring.`;
     case 'hired':
       return change.employer ? `${citizen(change.citizenKey)} now works for ${name(change.employer)}.` : `${citizen(change.citizenKey)} works for the city again.`;

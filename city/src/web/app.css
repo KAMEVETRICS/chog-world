@@ -32,7 +32,8 @@
   display: grid;
   place-items: center;
   height: 100%;
-  padding: 88px 440px 24px 24px;
+  /* Clear of the goals card (left) and the journal (right). */
+  padding: 88px 440px 24px 330px;
   background: var(--paper);
 }
 
@@ -586,7 +587,13 @@
   gap: var(--s-4);
   padding: 0 var(--s-5);
   overflow-x: auto;
-  scrollbar-width: thin;
+  overflow-y: hidden;
+  /* Still scrolls sideways on narrow screens, without a scrollbar crowding the tabs. */
+  scrollbar-width: none;
+}
+
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
@@ -1395,6 +1402,17 @@
   color: var(--ink-3);
 }
 
+.feed-day,
+.feed-phase {
+  display: block;
+  line-height: 1.3;
+}
+
+.feed-day {
+  color: var(--ink-2);
+  font-weight: 700;
+}
+
 .feed-tick ul {
   margin: 0;
   padding: 0;
@@ -1416,6 +1434,10 @@
 /* ---------- Responsive ---------- */
 
 @media (max-width: 1100px) {
+  /* Too narrow to keep clear of both cards: the map runs under the (collapsible) goals card. */
+  .flat-stage {
+    padding: 132px 440px 24px 24px;
+  }
   .hud-fixture {
     left: auto;
     right: 16px;
@@ -1492,7 +1514,8 @@
     right: 8px;
     bottom: 8px;
     width: auto;
-    max-height: 58vh;
+    /* About half the screen: room for the card, with the village still visible above it. */
+    max-height: 52vh;
     border-radius: 18px;
   }
   .panel.is-collapsed {
@@ -1900,6 +1923,15 @@
 @media (max-width: 420px) {
   .treasury {
     grid-template-columns: repeat(2, 1fr);
+  }
+  /* Phones: the brand plate and the clock share one row, so each gives up its second line. */
+  .hud-brand {
+    right: auto;
+    max-width: calc(100% - 172px);
+  }
+  .brand-sub,
+  .clock-next {
+    display: none;
   }
 }
 

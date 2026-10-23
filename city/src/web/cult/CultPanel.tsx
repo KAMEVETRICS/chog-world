@@ -133,7 +133,7 @@ function eventLine(event: CultEvent, snapshot: CultSnapshot): string {
     case 'place_control_changed': { const control = payload.control as { faction: FactionId; decreeId: string } | null; return control ? `${FACTION_NAME[control.faction]} takes the ${PLACES_TEXT[payload.place as Place]}: ${decreeById(control.decreeId)?.feedLine ?? control.decreeId}` : `The ${PLACES_TEXT[payload.place as Place]} is neutral.`; }
     case 'cycle_resolved': return `Cycle ${payload.cycle} resolved.`;
     case 'city_gap': return 'The village could not be reached; presence counts zero this cycle.';
-    case 'city_late': return 'Older village ticks were skipped for this cycle.';
+    case 'city_late': return 'Some earlier village hours were skipped this cycle.';
     case 'schedule_gap': return 'The Cult resumed after time offline.';
     default: return 'The Cult moved on.';
   }

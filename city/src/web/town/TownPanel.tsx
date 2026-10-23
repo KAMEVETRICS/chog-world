@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { JOBS, PARAM_IDS, type CitizenState, type Job, type JobRequest, type JobResult, type JoinRequest, type JoinResult, type VillagerLook, type WorldState } from '../../shared/contracts';
 import { CONSTITUTION, PROTECTED } from '../../shared/constitution';
 import { appearanceOf } from '../../shared/looks';
+import { AppearanceBadge } from '../world/Badge';
 import { GATHER_SITES, JOB_SITE, TREASURY_CAP, VILLAGER_OPTIONS, VOTE_ACTIVE_DAYS, siteYield } from '../../shared/rules';
 import { villagerNameSchema } from '../../shared/schemas';
 import { canVote, citizenAsleep, villagerLookFor } from '../../simulation/citizens';
@@ -11,6 +12,8 @@ import { JOB_LABEL, RESOURCE_LABEL, placeName } from '../format';
 import { ActionStatus, GiftForm, useAct, type OnAct } from '../economy/actions';
 import { Projects } from '../economy/Projects';
 import { Votes } from '../economy/Votes';
+import { growthOf, GROWTH_RULES, RANKS } from './rank';
+import './growth.css';
 import type { AgentState } from '../../shared/contracts';
 
 const LOOK_LABEL: Record<keyof VillagerLook, string> = { Skin: 'Fur', Head: 'Hat', Body: 'Outfit', Eyes: 'Eyes' };
@@ -30,34 +33,7 @@ const JOB_ERRORS: Record<Exclude<JobResult, { ok: true }>['code'], string> = {
 
 /** A small drawing of a villager in its chosen colours. */
 export function VillagerBadge({ look, size = 56 }: { look: VillagerLook; size?: number }) {
-  const a = appearanceOf(look);
-  return (
-    <svg viewBox="-16 -26 32 30" width={size} height={size * 0.94} role="img" aria-label="Villager">
-      <ellipse cx="0" cy="2" rx="9" ry="2.2" fill="rgba(42,33,27,0.18)" />
-      <path d="M-9 -7 L-12 -11 L-8 -12 L-9 -16 L-5 -15 L-4 -19 L0 -16.5 L3 -19.5 L5 -15.5 L9 -16.5 L8.5 -12 L12.5 -11 L9 -7 Z" fill={a.skin.furDeep} />
-      <rect x="-7" y="-4" width="14" height="6" rx="3" fill={a.outfit.kind === 'none' ? a.skin.fur : a.outfit.color} />
-      <ellipse cx="0" cy="-8" rx="8.6" ry="8" fill={a.skin.fur} />
-      <ellipse cx="0" cy="-6.8" rx="6" ry="4.8" fill={a.skin.mask} />
-      {a.eyes.kind === 'glasses' ? (
-        <g fill="none" stroke="#2b2733" strokeWidth="1">
-          <circle cx="-2.6" cy="-8" r="2" />
-          <circle cx="2.6" cy="-8" r="2" />
-        </g>
-      ) : null}
-      {a.eyes.kind === 'happy' ? (
-        <g fill="none" stroke="#2b2733" strokeWidth="1.2" strokeLinecap="round">
-          <path d="M-4 -7.6 Q-2.5 -9.4 -1 -7.6" />
-          <path d="M1 -7.6 Q2.5 -9.4 4 -7.6" />
-        </g>
-      ) : (
-        <g fill="#2b2733">
-          <circle cx="-2.5" cy="-8" r="1.3" />
-          <circle cx="2.5" cy="-8" r="1.3" />
-        </g>
-      )}
-      {a.hat.kind !== 'none' ? <path d="M-7 -14 Q0 -22 7 -14 Z" fill={a.hat.color} /> : null}
-    </svg>
-  );
+  return <AppearanceBadge appearance={appearanceOf(look)} size={size} label="Villager" />;
 }
 
 function statusOf(citizen: CitizenState, world: WorldState): string {
@@ -160,7 +136,7 @@ function JobOffers({ citizen, world, onAct }: { citizen: CitizenState; world: Wo
             <li key={a.key} className="offer-row">
               <span className="villager-row-name">{a.name}</span>
               <span className="villager-row-status">
-                {JOB_LABEL[a.offer!.job]} · {a.offer!.wage} coins a tick
+                {JOB_LABEL[a.offer!.job]} · {a.offer!.wage} coins an hour
               </span>
               {citizen.employer === a.key ? (
                 <span className="tag tag--mine">Your job</span>
@@ -233,14 +209,53 @@ function MyVillager({ citizen, world, onJob, onAct }: { citizen: CitizenState; w
             );
           })}
         </div>
-        <span className="setting-hint">Changes take effect next tick. Work pays only while the city's stores have room.</span>
+        <span className="setting-hint">A new job starts within the hour. Work pays only while the city's stores have room.</span>
       </div>
       <p className="settings-status decor-status--error" role="status" aria-live="polite">
         {error ?? ''}
       </p>
       <JobOffers citizen={citizen} world={world} onAct={onAct} />
-      <span className="setting-label">Give coins</span>
+      <span id="gift-h" className="setting-label">
+        Give coins
+      </span>
       <GiftForm world={world} from={{ kind: 'citizen' }} fromKey={citizen.key} canGiveMaterials={false} onAct={onAct} />
+    </div>
+  );
+}
+
+/** Where the village stands on the road from Hamlet to City, and what grows it. */
+function VillageGrowth({ world }: { world: WorldState }) {
+  const g = growthOf(world);
+  return (
+    <div className="growth">
+      <ol className="growth-ranks" aria-label="Village ranks">
+        {RANKS.map((r, i) => (
+          <li
+            key={r.name}
+            className={r === g.rank ? 'is-current' : g.points >= r.from ? 'is-past' : undefined}
+            style={{ left: `${(i / (RANKS.length - 1)) * 100}%` }}
+          >
+            {r.name}
+          </li>
+        ))}
+      </ol>
+      <span className="growth-bar" role="img" aria-label={g.next ? `${g.points} of ${g.next.from} growth to become a ${g.next.name}` : 'Fully grown'}>
+        <span style={{ width: `${Math.round(g.journey * 100)}%` }} />
+        {RANKS.slice(1, -1).map((r, i) => (
+          <i key={r.name} className="growth-tick" style={{ left: `${((i + 1) / (RANKS.length - 1)) * 100}%` }} />
+        ))}
+      </span>
+      <p className="setting-hint">
+        {g.next ? (
+          <>
+            <strong>{g.next.from - g.points} more growth</strong> to become a {g.next.name}.{' '}
+          </>
+        ) : (
+          'A full city: the village has grown as far as it goes. '
+        )}
+        Every home level built adds {GROWTH_RULES.homeLevel}, every villager who moves in adds {GROWTH_RULES.villager}, and every shared project adds{' '}
+        {GROWTH_RULES.project}. The town makes room as people arrive: when the main island fills, a new district rises across a footbridge.
+      </p>
     </div>
   );
 }
@@ -267,7 +282,7 @@ function CityHall({ world }: { world: WorldState }) {
       </dl>
       <table className="constitution">
         <caption>
-          The constitution <span className="section-aside">Rules version {params.version}</span>
+          City rules <span className="section-aside">Version {params.version}</span>
         </caption>
         <thead>
           <tr>
@@ -297,7 +312,7 @@ function CityHall({ world }: { world: WorldState }) {
           })}
         </tbody>
       </table>
-      <p className="setting-hint">Votes can change only these numbers, within these limits.</p>
+      <p className="setting-hint">Votes can change only these numbers, within these limits. No vote can ever change:</p>
       <ul className="protected">
         {PROTECTED.map((line) => (
           <li key={line}>{line}</li>
@@ -341,12 +356,19 @@ export function TownPanel({
         {mine ? (
           <MyVillager citizen={mine} world={world} onJob={onJob} onAct={onAct} />
         ) : !canJoin ? (
-          <p className="readonly-note">Citizens are coming to this server soon.</p>
+          <p className="readonly-note">Villagers are coming to this server soon.</p>
         ) : myAddress ? (
           <JoinForm key={myAddress} address={myAddress} onJoin={onJoin} />
         ) : (
           <p className="readonly-note">{signInHint}</p>
         )}
+      </section>
+
+      <section className="panel-section" aria-labelledby="grow-h">
+        <h3 id="grow-h" className="section-title">
+          Our village
+        </h3>
+        <VillageGrowth world={world} />
       </section>
 
       <section className="panel-section" aria-labelledby="hall-h">
